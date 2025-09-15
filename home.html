@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home</title>
+  </head>
+
+  <body style="margin: 0; font-family: Arial, sans-serif">
+    <header>
+      <!-- site-wide boiler plate header if needed -->
+    </header>
+
+    <nav
+      style="
+        display: flex;
+        background-color: black;
+        padding: 10px;
+        margin: 0;
+        width: 100%;
+      "
+    >
+      <ul
+        style="
+          display: flex;
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          gap: 10px;
+        "
+      >
+        <li style="flex: 1; text-align: center">
+          <a
+            href="home.html"
+            style="
+              display: block;
+              padding: 12px;
+              text-decoration: none;
+              color: white;
+              background-color: #444;
+              border-radius: 5px;
+              cursor: pointer;
+            "
+            onmouseover="this.style.backgroundColor='#666';"
+            onmouseout="this.style.backgroundColor='#444';"
+          >
+            View
+          </a>
+        </li>
+        <li style="flex: 1; text-align: center">
+          <a
+            href="update.html"
+            style="
+              display: block;
+              padding: 12px;
+              text-decoration: none;
+              color: white;
+              background-color: #444;
+              border-radius: 5px;
+              cursor: pointer;
+            "
+            onmouseover="this.style.backgroundColor='#666';"
+            onmouseout="this.style.backgroundColor='#444';"
+          >
+            Update
+          </a>
+        </li>
+        <li style="flex: 1; text-align: center">
+          <a
+            href="generate.html"
+            style="
+              display: block;
+              padding: 12px;
+              text-decoration: none;
+              color: white;
+              background-color: #444;
+              border-radius: 5px;
+              cursor: pointer;
+            "
+            onmouseover="this.style.backgroundColor='#666';"
+            onmouseout="this.style.backgroundColor='#444';"
+          >
+            Generate
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <main
+      style="
+        display: grid;
+        height: 100vh;
+        grid-template-columns: repeat(3, 1fr);
+        place-items: center;
+      "
+    >
+      <h1 id="test" style="grid-column: 2/3">Home/View</h1>
+    </main>
+  </body>
+
+  <footer>
+    <!-- site-wide boiler plate footer if needed -->
+  </footer>
+</html>

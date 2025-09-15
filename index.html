@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+  </head>
+
+  <body>
+    <header>
+      <!-- site-wide boiler plate header if needed -->
+    </header>
+
+    <main
+      style="
+        display: grid;
+        height: 100vh;
+        grid-template-columns: repeat(3, 1fr);
+        place-items: center;
+        justify-iterms: center;
+      "
+    >
+      <div style="grid-column: 2/3; gap: 1rem; text-align: center">
+        <h1>Login</h1>
+
+        <form>
+          <label for="username">Username: </label>
+          <input type="text" id="username" name="username" />
+
+          <br />
+
+          <label for="password">Password: </label>
+          <input type="text" id="password" name="password" />
+        </form>
+
+        <br />
+
+        <button
+          style="cursor: pointer"
+          onclick="window.location.href='home.html'"
+        >
+          Login
+        </button>
+      </div>
+    </main>
+    <footer>
+      <!-- site-wide boiler plate footer if needed -->
+    </footer>
+  </body>
+</html>
