@@ -1,0 +1,52 @@
+/* variables */
+:root {
+  --color-wildcat-blue: rgba(0, 51, 160, 1);
+  --color-wildcat-white: rgba(255, 255, 255, 1);
+  --color-bluegrass: rgba(0, 113, 235, 1);
+  --color-sky: rgba(177, 201, 232, 1);
+  --color-midnight: rgba(4, 30, 66, 1);
+  --color-goldenrod: rgba(255, 220, 0, 1);
+  --color-sunset: rgba(255, 163, 96, 1);
+  --color-river-green: rgba(76, 188, 192, 1);
+  --color-cool-neutral: rgba(220, 221, 222, 1);
+  --color-warm-neutral-20: rgba(249, 249, 245, 1);
+  --color-warm-neutral-60: rgba(239, 235, 226, 1);
+  --color-warm-neutral: rgba(214, 210, 196, 1);
+  --color-wildcat-black: rgba(0, 0, 0, 1);
+  --color-light-blue: rgba(24, 151, 212, 1);
+  --color-medium-blue: rgba(43, 58, 130, 1);
+  --color-dark-blue: rgba(31, 44, 94, 1);
+  --color-almost-wildcat-blue: rgba(0, 38, 120, 1);
+  --color-light-blue-tint: rgba(161, 211, 237, 1);
+  --color-light-blue-shade: rgba(16, 102, 147, 1);
+  --color-blue-black: rgba(0, 5, 0, 1);
+  --color-light-gray: rgba(200, 200, 199, 1);
+  --color-subtle-gray: rgba(235, 235, 235, 1);
+  --color-barely-gray: rgba(244, 244, 245, 1);
+  --color-dark-gray: rgba(81, 86, 100, 1);
+  --color-blue-gray: rgba(239, 244, 253, 1);
+  --color-success: rgba(124, 252, 0, 1);
+  --color-warning: rgba(255, 140, 0, 1);
+  --color-alert: rgba(193, 44, 43, 1);
+  --color-info: rgba(161, 211, 237, 1);
+
+  --color-text: #000;
+  --font-base: "Inter", sans-serif;
+  --spacing-md: 1rem;
+}
+
+/* reset / normalize */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* typography */
+body {
+  font-family: var(--font-base);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-wildcat-white);
+}

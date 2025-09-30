@@ -1,0 +1,125 @@
+/* Header */
+header {
+  background-color: #0033a0;
+  padding: 1rem;
+  color: white;
+}
+
+header a.site-identity {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: white;
+}
+
+header .site-logo {
+  width: 85px;
+  height: 69px;
+  margin-right: 1rem;
+}
+
+header .logo-svg {
+  width: 100%;
+  height: auto;
+  fill: white;
+}
+
+header .wordmark {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+header .wordmark__subhead {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 400;
+}
+
+header .wordmark__title {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+header hr {
+  border: none;
+  border-top: 2px solid white;
+  margin-top: 1rem;
+}
+
+/* Nav */
+nav {
+  background-color: var(--color-wildcat-blue);
+  padding: 10px;
+}
+
+nav ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  gap: 10px;
+}
+
+nav ul li {
+  flex: 1;
+  text-align: center;
+}
+
+.nav-btn {
+  display: block;
+  padding: 12px;
+  text-decoration: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Nav */
+nav {
+  background-color: var(--color-wildcat-blue);
+  padding: 10px;
+}
+
+nav ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  gap: 10px;
+}
+
+nav ul li {
+  flex: 1;
+  text-align: center;
+}
+
+.nav-btn {
+  display: block;
+  padding: 12px;
+  text-decoration: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: var(--color-dark-gray);
+  transition: opacity 0.2s ease-in-out; /* smooth hover effect */
+}
+
+.nav-btn:hover {
+  opacity: 0.7;
+}
+
+/* Main content */
+main {
+  display: grid;
+  height: 100vh;
+  grid-template-columns: repeat(3, 1fr);
+  place-items: center;
+}
+
+main h1 {
+  grid-column: 2 / 3;
+}

@@ -1,0 +1,18 @@
+header {
+  background: var(--color-wildcat-blue);
+  color: white;
+  padding: var(--spacing-md);
+}
+
+footer {
+  background: #222;
+  color: #ddd;
+  text-align: center;
+  padding: var(--spacing-md);
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+}
