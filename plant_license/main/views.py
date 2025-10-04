@@ -48,6 +48,7 @@ def specific_view(request, param):
 
     context = {
         'results': subset,
+        'headers' : table.display_fields,
         'param': param, 
         'query': query,
     } 

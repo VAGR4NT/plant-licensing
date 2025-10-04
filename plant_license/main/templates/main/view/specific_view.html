@@ -17,15 +17,29 @@
 </form>
 
     {% if results %}
-        <ul>
-            {% for result in results %}
-                <li>
-                    <br><em>Result</em>
-                </li>
-            {% endfor %}
-        </ul>
+      <div class="center">   
+         <table border="1">
+            <thead>
+                <tr>
+                    {% for header in headers %}
+                        <th>{{ header|title }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for result in results %}
+                    <tr>
+                        {% for value in result.get_display_details %}
+                            <td>{{ value }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+         </table>
     {% elif query %}
         <p>No businesses found for "{{ query }}".</p>
-    {% endif %}
+      </div>
+   {% endif %}
 
 {% endblock %}
