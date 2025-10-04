@@ -1,0 +1,19 @@
+.view_list {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-column: 2/3;
+  justify-items: center;
+  align-items: center;
+  list-style: none;
+}
+
+.view_list li {
+  grid-column: 2;
+}
+.btn {
+  margin: 0.5rem;
+}
+
+h1 {
+  margin-left: 1rem;
+}

@@ -1,0 +1,31 @@
+{% extends "main/base.html" %}
+{% load static %}
+{% block title %} Specific View {% endblock %}>
+
+{% block page_css %} 
+   <link rel="stylesheet" href="{% static 'css/specific_view.css' %}">
+
+{% endblock %}
+
+{% block content %}
+
+<h1> Specific View </h1>
+
+<form action="{% url 'specific_view' category=category %}" method="get">
+   <input type="text" name="q" value="{{ query }}" placeholder="Search....">
+   <button type="submit">Search</button>
+</form>
+
+    {% if businesses %}
+        <ul>
+            {% for business in businesses %}
+                <li><strong>Address:</strong> {{ business.mo_address }}
+                    <br><em>(Name: {{ business.business_name }})</em>
+                </li>
+            {% endfor %}
+        </ul>
+    {% elif query %}
+        <p>No businesses found for "{{ query }}".</p>
+    {% endif %}
+
+{% endblock %}
