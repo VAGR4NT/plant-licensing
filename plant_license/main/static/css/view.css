@@ -5,13 +5,19 @@
   justify-items: center;
   align-items: center;
   list-style: none;
+  width: 100%;
 }
 
 .view_list li {
   grid-column: 2;
+  width: 100%;
+  display: flex; /* Use flex to control button width */
 }
+
 .btn {
   margin: 0.5rem;
+  flex: 1; /* Button expands to fill available space */
+  text-align: center;
 }
 
 h1 {

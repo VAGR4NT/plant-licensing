@@ -13,13 +13,17 @@
 
 <ul class="view_list"> 
   <li>
-      <a href="{% url 'specific_view' category='business_id' %}" class="btn"> ID Number </a>
-
+      <a href="{% url 'specific_view' param='business_name' %}" class="btn"> Business Name</a>
   </li>
   <li>
-      <a href="{% url 'specific_view' category='business_name' %}" class="btn"> Client Name / Alias </a>
+      <a href="{% url 'specific_view' param='mo_address' %}" class="btn">Address</a>
   </li>
-
+  <li>
+      <a href="{% url 'specific_view' param='mo_city' %}" class="btn">City</a>
+  </li>
+  <li>
+      <a href="{% url 'specific_view' param='supplier_name' %}" class="btn">Supplier</a>
+  </li>
 </ul>
 
 {% endblock %}
