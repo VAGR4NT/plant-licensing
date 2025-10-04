@@ -14,22 +14,41 @@ def home_view(request):
 
     return render(request, "main/index.html", context)
 
-def specific_view(request, category):
-    ALLOWED_SEARCH_FIELDS = ['business_name', 'business_id']
+def specific_view(request, param):
 
-    if category not in ALLOWED_SEARCH_FIELDS:
-        raise Http404("Invalid search category")
+    PARAMS = {
+        'business_name' : 0,
+        'mo_address' : 1,
+        'mo_city' : 2,
+        'supplier_name' : 3
+    }
+
+    table = Businesses
+    attribute = ""
+
+    match PARAMS[param]:
+        case 0:
+            attribute = "business_name"
+        case 1:
+            attribute = "mo_address"
+        case 2:
+            attribute = "mo_city"
+        case 3: 
+            attribute = "supplier_name"
+            table = Suppliers
+        case _:
+            raise Http404("Invalid search category")
 
     query = request.GET.get('q')
-    businesses = Businesses.objects.none()
+    subset = table.objects.none()
 
     if query:
-        filter_kwargs = {f"{category}__icontains": query}
-        businesses = Businesses.objects.filter(**filter_kwargs)
+        filter_kwargs = {f"{attribute}__icontains": query}
+        subset  = table.objects.filter(**filter_kwargs)
 
     context = {
-        'businesses': businesses,
-        'category': category, 
+        'results': subset,
+        'param': param, 
         'query': query,
     } 
     

@@ -11,16 +11,16 @@
 
 <h1> Specific View </h1>
 
-<form action="{% url 'specific_view' category=category %}" method="get">
+<form action="{% url 'specific_view' param=param %}" method="get">
    <input type="text" name="q" value="{{ query }}" placeholder="Search....">
    <button type="submit">Search</button>
 </form>
 
-    {% if businesses %}
+    {% if results %}
         <ul>
-            {% for business in businesses %}
-                <li><strong>Address:</strong> {{ business.mo_address }}
-                    <br><em>(Name: {{ business.business_name }})</em>
+            {% for result in results %}
+                <li>
+                    <br><em>Result</em>
                 </li>
             {% endfor %}
         </ul>
