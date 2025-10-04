@@ -14,30 +14,25 @@ def home_view(request):
     return render(request, "main/index.html", context)
 
 def specific_view(request):
-    query = request.GET.get('q', '')
-    
-    category_id = request.GET.get('category')
-    
-    if category_id:
-        category = get_object_or_404(Category, pk=category_id)
-        search_pool = Post.objects.filter(category=category)
-    else:
-        category = None
-        search_pool = Post.objects.all()
+    ALLOWED_SEARCH_FIELDS = ['business_name']
 
-    posts = Post.objects.none()
+    if category not in ALLOWED_SEARCH_FIELDS:
+        raise Http404("Invalid search category")
+
+    query = request.GET.get('q')
+    businesses = Business.objects.none()
+
     if query:
-        posts = search_pool.filter(
-            Q(title__icontains=query) | Q(content__icontains=query)
-        )
+        filter_kwargs = {f"{category}__icontains": query}
+        businesses = Business.objects.filter(**filter_kwargs)
 
     context = {
+        'businesses': businesses,
+        'category': category, 
         'query': query,
-        'posts': posts,
-        'selected_category': category, # Pass the category to the template
-    }
+    } 
     
-    return render(request, 'my_app/search_results.html', context)
+    return render(request, 'my_app/view/specific_html', context)
 
 def direct_access_view(request):
     return render(request, "main/direct-access/index.html")
