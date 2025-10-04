@@ -1,5 +1,5 @@
 {% extends "main/base.html" %}
-
+{% load static %}
 {% block title %} Specific View {% endblock %}>
 
 {% block page_css %} 
@@ -11,7 +11,7 @@
 
 <h1> Specific View </h1>
 
-<form action="{% url 'search_results' %}" method="get">
+<form action="{% url 'specific_view' category=category %}" method="get">
    <input type="text" name="q" value="{{ query }}" placeholder="Search....">
    <button type="submit">Search</button>
 </form>
@@ -20,7 +20,7 @@
         <ul>
             {% for business in businesses %}
                 <li><strong>Address:</strong> {{ business.address }}
-                    <br><em>(Name: {{ business.name }})</em>
+                    <br><em>(Name: {{ business.business_name }})</em>
                 </li>
             {% endfor %}
         </ul>

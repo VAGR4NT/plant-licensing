@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from .models import Suppliers
+from .models import Businesses
 from django.db import connection 
 
 def home_view(request):
@@ -13,18 +14,18 @@ def home_view(request):
 
     return render(request, "main/index.html", context)
 
-def specific_view(request):
+def specific_view(request, category):
     ALLOWED_SEARCH_FIELDS = ['business_name']
 
     if category not in ALLOWED_SEARCH_FIELDS:
         raise Http404("Invalid search category")
 
     query = request.GET.get('q')
-    businesses = Business.objects.none()
+    businesses = Businesses.objects.none()
 
     if query:
         filter_kwargs = {f"{category}__icontains": query}
-        businesses = Business.objects.filter(**filter_kwargs)
+        businesses = Businesses.objects.filter(**filter_kwargs)
 
     context = {
         'businesses': businesses,
@@ -32,7 +33,7 @@ def specific_view(request):
         'query': query,
     } 
     
-    return render(request, 'my_app/view/specific_html', context)
+    return render(request, 'main/view/specific_view.html', context)
 
 def direct_access_view(request):
     return render(request, "main/direct-access/index.html")
