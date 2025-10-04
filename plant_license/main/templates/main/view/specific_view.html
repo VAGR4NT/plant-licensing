@@ -12,7 +12,7 @@
 <h1> Specific View </h1>
 
 <form action="{% url 'specific_view' param=param %}" method="get">
-   <input type="text" name="q" value="{{ query }}" placeholder="Search....">
+   <input type="text" name="q" value="{{ query|default:'' }}" placeholder="Search....">
    <button type="submit">Search</button>
 </form>
 
