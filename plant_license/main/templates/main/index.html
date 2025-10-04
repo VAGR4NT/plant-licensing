@@ -1,22 +1,24 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Generate Forms</title>
+    <title>Login</title>
     <link
       rel="icon"
       type="image/vnd.microsoft.icon"
-      href="/images/favicon.ico"
+      href="{% static 'images/favicon.ico' %}"
     />
 
-    <link rel="stylesheet" href="/base.css" />
-    <link rel="stylesheet" href="/global-components.css" />
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/global-components.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/login.css' %}" />
   </head>
 
   <body>
     <header>
-      <a href="/view/" class="site-identity">
+      <a href="{% url 'direct_access' %}"  class="site-identity">
         <div class="site-logo">
           <svg
             focusable="false"
@@ -45,28 +47,25 @@
           <span class="wordmark__title">Plant Licensing</span>
         </div>
       </a>
-
-      <hr />
     </header>
 
-    <nav>
-      <ul>
-        <li><a href="/view/" class="nav-btn">View</a></li>
-        <li>
-          <a href="/generate-forms/" class="nav-btn">Generate</a>
-        </li>
-        <li>
-          <a href="/direct-access/" class="nav-btn">Direct Access</a>
-        </li>
-        <li><a href="/update/" class="nav-btn">Update</a></li>
-        <li><a href="/user-info/" class="nav-btn">User Info</a></li>
-      </ul>
-    </nav>
-
     <main>
-      <h1>Generate Forms</h1>
-    </main>
+      <div class="login">
+        <h1>Sign In</h1>
 
+        <form>
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" />
+
+          <label for="password">Password</label>
+          <input type="text" id="password" name="password" />
+        </form>
+
+        <div class="login-btn">
+          <button class="btn">Login</button>
+        </div>
+      </div>
+    </main>
     <footer>
       <!-- site-wide boiler plate footer if needed -->
     </footer>
