@@ -24,3 +24,15 @@
   margin-top: 1em;
   text-align: center;
 }
+
+/* Main content */
+main {
+  display: grid;
+  height: 100vh;
+  grid-template-columns: repeat(3, 1fr);
+  place-items: center;
+}
+
+main h1 {
+  grid-column: 2 / 3;
+}
