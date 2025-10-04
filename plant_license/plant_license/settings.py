@@ -76,9 +76,9 @@ WSGI_APPLICATION = "plant_license.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "plant_license",
-        "USER": "admin",
-        "PASSWORD": "admin",
+        "NAME": "licensing",
+        "USER": "postgres",
+        "PASSWORD": "123",
         "HOST": "localhost",
         "PORT": "5432",
     }

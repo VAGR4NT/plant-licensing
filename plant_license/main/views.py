@@ -1,10 +1,21 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib.auth.models import User  # or import your custom models
-
+from django.db import connection 
 
 def home_view(request):
-    return render(request, "main/index.html")
+    
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT COUNT(*) FROM suppliers")
+        row = cursor.fetchone()
+
+    total_posts = row[0]
+
+    context = {
+        'number_of_suppliers': total_posts,
+    }
+
+    return render(request, "main/index.html", context)
 
 
 def direct_access_view(request):
