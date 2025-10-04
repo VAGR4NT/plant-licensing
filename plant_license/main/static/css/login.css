@@ -1,4 +1,5 @@
 .login {
+  font-size: 1.5rem;
   background: var(--color-light-gray);
   padding: 2rem;
   border-radius: 8px;
@@ -19,10 +20,25 @@
 .login input {
   display: block;
   width: 100%;
+  padding: 1em;
 }
 .login-btn {
   margin-top: 1em;
   text-align: center;
+}
+
+/* login forgot password button */
+#forgot {
+  color: blue;
+  margin-top: 0.5em;
+  font-size: 0.75em;
+}
+#forgot:visited {
+  color: blue;
+}
+
+.btn {
+  font-size: 1em;
 }
 
 /* Main content */

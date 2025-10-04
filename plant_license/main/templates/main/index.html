@@ -18,7 +18,7 @@
 
   <body>
     <header>
-      <a href="{% url 'direct_access' %}"  class="site-identity">
+      <a href="{% url 'view_db' %}"  class="site-identity">
         <div class="site-logo">
           <svg
             focusable="false"
@@ -50,7 +50,6 @@
     </header>
 
     <main>
-      <h1>Welcome, {{ number_of_suppliers }}!</h1> 
        <div class="login">
         <h1>Sign In</h1>
 
@@ -61,14 +60,12 @@
           <label for="password">Password</label>
           <input type="text" id="password" name="password" />
         </form>
+        <a href="" id="forgot">Forgot Password</a>
 
         <div class="login-btn">
           <button class="btn">Login</button>
         </div>
       </div>
     </main>
-    <footer>
-      <!-- site-wide boiler plate footer if needed -->
-    </footer>
   </body>
 </html>

@@ -19,6 +19,7 @@
   flex: 1; /* Button expands to fill available space */
   text-align: center;
   font-size: 1.5rem;
+  background-color: var(--color-wildcat-black);
 }
 
 h1 {
