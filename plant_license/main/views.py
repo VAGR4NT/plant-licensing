@@ -15,7 +15,7 @@ def home_view(request):
     return render(request, "main/index.html", context)
 
 def specific_view(request, category):
-    ALLOWED_SEARCH_FIELDS = ['business_name']
+    ALLOWED_SEARCH_FIELDS = ['business_name', 'business_id']
 
     if category not in ALLOWED_SEARCH_FIELDS:
         raise Http404("Invalid search category")
