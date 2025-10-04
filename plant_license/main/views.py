@@ -1,4 +1,6 @@
 from django.shortcuts import render
+from django.http import HttpResponse
+from django.contrib.auth.models import User  # or import your custom models
 
 
 def home_view(request):
@@ -23,3 +25,13 @@ def update_view(request):
 
 def user_info_view(request):
     return render(request, "main/user-info/index.html")
+
+
+def database_check_view(request):
+    try:
+        # Simple test query
+        user_count = User.objects.count()
+        return HttpResponse(f"Database is working! User count: {user_count}")
+
+    except Exception as e:
+        return HttpResponse(f"Database error: {str(e)}")
