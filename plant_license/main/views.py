@@ -13,6 +13,31 @@ def home_view(request):
 
     return render(request, "main/index.html", context)
 
+def specific_view(request):
+    query = request.GET.get('q', '')
+    
+    category_id = request.GET.get('category')
+    
+    if category_id:
+        category = get_object_or_404(Category, pk=category_id)
+        search_pool = Post.objects.filter(category=category)
+    else:
+        category = None
+        search_pool = Post.objects.all()
+
+    posts = Post.objects.none()
+    if query:
+        posts = search_pool.filter(
+            Q(title__icontains=query) | Q(content__icontains=query)
+        )
+
+    context = {
+        'query': query,
+        'posts': posts,
+        'selected_category': category, # Pass the category to the template
+    }
+    
+    return render(request, 'my_app/search_results.html', context)
 
 def direct_access_view(request):
     return render(request, "main/direct-access/index.html")
