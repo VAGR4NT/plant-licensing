@@ -8,5 +8,4 @@ urlpatterns = [
     path("generate-forms/", views.generate_forms_view, name="generate_forms"),
     path("update/", views.update_view, name="update"),
     path("user-info/", views.user_info_view, name="user_info"),
-    path("db-check/", views.database_check_view, name="db-check"),
 ]
