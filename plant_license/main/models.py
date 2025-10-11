@@ -161,10 +161,7 @@ class Businesses(models.Model):
     wants_labels = models.BooleanField(blank=True, null=True)
     num_labels = models.IntegerField(blank=True, null=True)
 
-    display_fields = ["Business Name", "Address", "City"]
-    
-    def get_display_details(self):
-        return [f"{self.business_name}",f"{self.mo_address}", f"{self.mo_city}"]
+    suppliers = models.ManyToManyField('Suppliers', through='BusinessSuppliers')
 
     class Meta:
         managed = False
@@ -305,10 +302,7 @@ class Suppliers(models.Model):
     state = models.CharField(max_length=128, blank=True, null=True)
     zip_code = models.CharField(max_length=18, blank=True, null=True)
     
-    display_fields = ["Supplier Name","Address"]
-
-    def get_display_details(self):
-        return [f"{self.supplier_name}", f"{self.address}"]
+    businesses = models.ManyToManyField('Businesses', through='BusinessSuppliers')
 
     class Meta:
         managed = False
