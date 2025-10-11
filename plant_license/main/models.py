@@ -161,8 +161,6 @@ class Businesses(models.Model):
     wants_labels = models.BooleanField(blank=True, null=True)
     num_labels = models.IntegerField(blank=True, null=True)
 
-    suppliers = models.ManyToManyField('Suppliers', through='BusinessSuppliers')
-
     class Meta:
         managed = False
         db_table = 'businesses'
@@ -302,8 +300,6 @@ class Suppliers(models.Model):
     state = models.CharField(max_length=128, blank=True, null=True)
     zip_code = models.CharField(max_length=18, blank=True, null=True)
     
-    businesses = models.ManyToManyField('Businesses', through='BusinessSuppliers')
-
     class Meta:
         managed = False
         db_table = 'suppliers'
