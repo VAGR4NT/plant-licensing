@@ -33,6 +33,7 @@ def query_builder(model, filters, select_columns):
     filters = A list of dictionaries, where each dict is a filter, field operator and value
                     [{'field': 'locations__city', 'operator': 'iexact', 'value': 'Lexington'}]
     select_columns: A list of field names to select, have whole path
+    returns tuple of headers and rows
     '''
     
     allowed_operators = ['exact', 'iexact', 'icontains', 'gt', 'gte', 'lt', 'lte']
