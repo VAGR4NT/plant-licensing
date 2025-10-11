@@ -109,8 +109,8 @@ class BusinessShippingRegions(models.Model):
 
 class BusinessSuppliers(models.Model):
     pk = models.CompositePrimaryKey('business_id', 'supplier_id')
-    business = models.ForeignKey('Businesses', models.DO_NOTHING)
-    supplier = models.ForeignKey('Suppliers', models.DO_NOTHING)
+    business = models.ForeignKey('Businesses', models.DO_NOTHING, related_name='supplier_links')
+    supplier = models.ForeignKey('Suppliers', models.DO_NOTHING, related_name='business_links')
 
     class Meta:
         managed = False
@@ -160,6 +160,8 @@ class Businesses(models.Model):
     wants_email_license = models.BooleanField(blank=True, null=True)
     wants_labels = models.BooleanField(blank=True, null=True)
     num_labels = models.IntegerField(blank=True, null=True)
+
+    suppliers = models.ManyToManyField('Suppliers', through='BusinessSuppliers', related_name='businesses')
 
     class Meta:
         managed = False
@@ -299,7 +301,7 @@ class Suppliers(models.Model):
     city = models.CharField(max_length=256, blank=True, null=True)
     state = models.CharField(max_length=128, blank=True, null=True)
     zip_code = models.CharField(max_length=18, blank=True, null=True)
-    
+
     class Meta:
         managed = False
         db_table = 'suppliers'
