@@ -1,45 +1,88 @@
 {% extends "main/base.html" %}
 {% load static %}
-{% block title %} Specific View {% endblock %}>
 
-{% block page_css %} 
-   <link rel="stylesheet" href="{% static 'css/specific_view.css' %}">
+{% block title %} View {% endblock %}
 
+{% block page_css %}
+    <link rel="stylesheet" href="{% static 'css/view.css' %}" />
 {% endblock %}
 
 {% block content %}
+<h1>Backend Query Builder Test Page</h1>
+    <p>This page directly tests the `query_builder` function in `services.py`.</p>
 
-<h1> Specific View </h1>
+    <form method="get" action="">
+        <!-- === 1. SELECT THE ROOT MODEL === -->
+        <fieldset>
+            <legend>Select Root Model (FROM clause)</legend>
+            <select name="model_type">
+                {% for model_name in model_map %}
+                    <option value="{{ model_name }}" {% if request.GET.model_type == model_name %}selected{% endif %}>
+                        {{ model_name|title }}
+                    </option>
+                {% endfor %}
+            </select>
+        </fieldset>
+        
+        <!-- === 2. DEFINE FILTERS === -->
+        <fieldset>
+            <legend>Define Filters (WHERE clause)</legend>
+            {% for rule in form_rules %}
+            <div class="rule-row">
+                <span>Rule {{ rule.num }}:</span>
+                <input type="text" name="field_{{ rule.num }}" placeholder="Field (e.g., locations__city)" value="{{ rule.field }}" size="30">
+                <select name="operator_{{ rule.num }}">
+                    <option value="">-- Operator --</option>
+                    {% for op in operators %}
+                        <option value="{{ op }}" {% if rule.operator == op %}selected{% endif %}>{{ op }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="value_{{ rule.num }}" placeholder="Value..." value="{{ rule.value }}">
+            </div>
+            {% endfor %}
+        </fieldset>
 
-<form action="{% url 'specific_view' param=param %}" method="get">
-   <input type="text" name="q" value="{{ query|default:'' }}" placeholder="Search....">
-   <button type="submit">Search</button>
-</form>
+        <!-- === 3. SELECT COLUMNS === -->
+        <fieldset>
+            <legend>Select Columns to Display (SELECT clause)</legend>
+            <p>Enter field paths (e.g., business_name, locations__address). Add one per line.</p>
+            <textarea name="columns" rows="8" cols="50">{{ columns_text }}</textarea>
+        </fieldset>
 
-    {% if results %}
-      <div class="center">   
-         <table border="1">
+        <button type="submit">Run Query</button>
+    </form>
+
+    <hr>
+    
+    <!-- === 4. DISPLAY RESULTS === -->
+    <h2>Results</h2>
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    {% if headers %}
+        <p>Query successful. Found {{ rows|length }} row(s).</p>
+        <table>
             <thead>
                 <tr>
                     {% for header in headers %}
-                        <th>{{ header|title }}</th>
+                        <th>{{ header }}</th>
                     {% endfor %}
                 </tr>
             </thead>
-
             <tbody>
-                {% for result in results %}
-                    <tr>
-                        {% for value in result.get_display_details %}
-                            <td>{{ value }}</td>
-                        {% endfor %}
-                    </tr>
+                {% for row in rows %}
+                <tr>
+                    {% for cell in row %}
+                        <td>{{ cell }}</td>
+                    {% endfor %}
+                </tr>
                 {% endfor %}
             </tbody>
-         </table>
-    {% elif query %}
-        <p>No businesses found for "{{ query }}".</p>
-      </div>
-   {% endif %}
-
+        </table>
+    {% else %}
+        <p>No results to display. Please run a query.</p>
+    {% endif %}
 {% endblock %}
+
