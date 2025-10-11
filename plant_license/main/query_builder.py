@@ -11,9 +11,9 @@ MODEL_MAP = {
     'location': Locations,
 }
 
-BusinessesConnectionList = []
-SuppliersConnectionList = []
-LocationsConnectionList = []
+BusinessesTableList = []
+SuppliersTableList = []
+LocationsTableList = []
 
 def _validate_and_get_field(model, path):
     parts = path.split('__')
