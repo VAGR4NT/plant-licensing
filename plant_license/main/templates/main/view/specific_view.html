@@ -8,82 +8,161 @@
 {% endblock %}
 
 {% block content %}
-<h1>Backend Query Builder Test Page</h1>
-    <p>This page directly tests the `query_builder` function in `services.py`.</p>
 
-    <form method="get" action="">
-        <!-- === 1. SELECT THE ROOT MODEL === -->
-        <fieldset>
-            <legend>Select Root Model (FROM clause)</legend>
-            <select name="model_type">
-                {% for model_name in model_map %}
-                    <option value="{{ model_name }}" {% if request.GET.model_type == model_name %}selected{% endif %}>
-                        {{ model_name|title }}
-                    </option>
-                {% endfor %}
-            </select>
-        </fieldset>
-        
-        <!-- === 2. DEFINE FILTERS === -->
-        <fieldset>
-            <legend>Define Filters (WHERE clause)</legend>
-            {% for rule in form_rules %}
-            <div class="rule-row">
-                <span>Rule {{ rule.num }}:</span>
-                <input type="text" name="field_{{ rule.num }}" placeholder="Field (e.g., locations__city)" value="{{ rule.field }}" size="30">
-                <select name="operator_{{ rule.num }}">
-                    <option value="">-- Operator --</option>
-                    {% for op in operators %}
-                        <option value="{{ op }}" {% if rule.operator == op %}selected{% endif %}>{{ op }}</option>
-                    {% endfor %}
-                </select>
-                <input type="text" name="value_{{ rule.num }}" placeholder="Value..." value="{{ rule.value }}">
+<main>
+      {{ table_fields|json_script:"table-fields-data" }}
+      <form method="get" action=""> 
+      <fieldset>
+            <legend>Primary Search</legend>
+            <div class="search-context">
+                <label>Search For:</label>
+                <div class="search-options">
+                    <input type="radio" id="search_business" name="search_type" value="business" checked>
+                    <label for="search_business">Business</label>
+
+                    <input type="radio" id="search_supplier" name="search_type" value="supplier">
+                    <label for="search_supplier">Supplier</label>
+
+                    <input type="radio" id="search_location" name="search_type" value="location">
+                    <label for="search_location">Location</label>
+                </div>
             </div>
-            {% endfor %}
+            <input class="search-bar" type="text" name="q" placeholder="Enter Business Name, Contact, Address, etc...">
         </fieldset>
 
-        <!-- === 3. SELECT COLUMNS === -->
-        
+         <details open>
+                <summary>Advanced Filters</summary>
+                <div class="filter-content">
+                    <div id="filter-list-container">
+                   
+                    </div>
+                    <button type="button" id="add-filter-btn">+ Add Filter</button>
+                </div>
+         </details>
+
         <fieldset>
-            <legend>Select Columns to Display (SELECT clause)</legend>
-            <p>Enter field paths (e.g., business_name, locations__address). Add one per line.</p>
-            <textarea name="columns" rows="8" cols="50">{{ columns_text }}</textarea>
+            <legend>Select Columns to Display</legend>
+            <div class="column-grid">
+               
+               {% for table, fields in table_fields.items %}
+                  <div class = "column_box">
+                     <h3> {{table}} </h3>
+                        {% for field_name in fields %}
+                         <label>
+                            <input type="checkbox" name="columns" value="{{ field_name.name }}"> 
+                              {{ field_name.label|title }}
+                         </label>
+                        {% endfor %} 
+                  </div>
+
+               {% endfor %}
+
+              </div>
+
         </fieldset>
+        <button type="submit">Generate Report</button>
+         </form>
 
-        <button type="submit">Run Query</button>
-    </form>
-
-    <hr>
-    
-    <!-- === 4. DISPLAY RESULTS === -->
-    <h2>Results</h2>
-
-    {% if error %}
-        <p class="error">{{ error }}</p>
-    {% endif %}
-
-    {% if headers %}
-        <p>Query successful. Found {{ rows|length }} row(s).</p>
-        <table>
-            <thead>
-                <tr>
-                    {% for header in headers %}
-                        <th>{{ header }}</th>
+         <section style="margin-top: 2em;">
+        <h2>Results</h2>
+        {% if error_message %}
+            <p style="color: red;">{{ error_message }}</p>
+        {% elif result_count is not None %}
+            <p>Found {{ result_count }} matching record(s). Showing {{ rows|length }}.</p>
+            {% if rows %}
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        {% for header in headers %}
+                            <th>{{ header }}</th>
+                        {% endfor %}
+                        <th>Actions</th> <!-- Header for the Edit button -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        {% for cell in row.data %}
+                            <td>{{ cell }}</td>
+                        {% endfor %}
+                        <td>
+                            <a href="{% url 'update' model_name=row.model_name pk=row.id %}">Edit</a>
+                        </td>
+                    </tr>
                     {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in rows %}
-                <tr>
-                    {% for cell in row %}
-                        <td>{{ cell }}</td>
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No results to display. Please run a query.</p>
-    {% endif %}
+                </tbody>
+            </table>
+            {% endif %}
+        {% else %}
+            <p>No query submitted yet. Please generate a report.</p>
+        {% endif %}
+    </section>
+
+</main>
+
+   <script>
+     document.addEventListener('DOMContentLoaded', function() {
+            const tableFieldsData = JSON.parse(document.getElementById('table-fields-data').textContent); 
+            const operators = {{ operators|safe }};
+            
+            console.log(tableFieldsData);
+
+            const addFilterBtn = document.getElementById('add-filter-btn');
+            const filterContainer = document.getElementById('filter-list-container');
+            let filterRowCount = 0;
+
+            addFilterBtn.addEventListener('click', createFilterRow);
+
+            function createFilterRow() {
+                filterRowCount++;
+                const row = document.createElement('div');
+                row.className = 'filter-row';
+
+                // 1. Group Selector
+                const groupSelect = document.createElement('select');
+                groupSelect.name = `adv_group_${filterRowCount}`;
+                groupSelect.innerHTML = `<option value="">-- Select Group --</option>` + 
+                    Object.keys(tableFieldsData).map(group => `<option value="${group}">${group}</option>`).join('');
+
+                // 2. Field Selector
+                const fieldSelect = document.createElement('select');
+                fieldSelect.name = `adv_field_${filterRowCount}`;
+                fieldSelect.innerHTML = `<option value="">-- Select Field --</option>`;
+
+                // 3. Operator Selector
+                const opSelect = document.createElement('select');
+                opSelect.name = `adv_op_${filterRowCount}`;
+                opSelect.innerHTML = `<option value="">-- Operator --</option>` +
+                    operators.map(op => `<option value="${op}">${op}</option>`).join('');
+
+                // 4. Value Input
+                const valueInput = document.createElement('input');
+                valueInput.type = 'text';
+                valueInput.name = `adv_val_${filterRowCount}`;
+                valueInput.placeholder = 'Value...';
+
+                // 5. Remove Button
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'remove-filter-btn';
+                removeBtn.textContent = 'X';
+                removeBtn.onclick = () => row.remove();
+
+                // --- Event Listener to link Group and Field dropdowns ---
+                groupSelect.addEventListener('change', function() {
+                    const selectedGroup = this.value;
+                    const fields = tableFieldsData[selectedGroup] || [];
+                    
+                    // Clear and update field dropdown
+                    fieldSelect.innerHTML = `<option value="">-- Select Field --</option>` +
+                        fields.map(field => `<option value="${field.name}">${field.label}</option>`).join('');
+                });
+
+                row.append(groupSelect, fieldSelect, opSelect, valueInput, removeBtn);
+                filterContainer.appendChild(row);
+            }
+        }); 
+   </script>
+
 {% endblock %}
 

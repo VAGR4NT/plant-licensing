@@ -31,7 +31,7 @@ def _validate_and_get_field(model, path):
     return field
 
 
-def query_builder(model, filters, select_columns):
+def query_builder(model, filters):
     ''' 
     model = Django Model class from models.py eg. Businesses, Suppliers, Locations
     filters = A list of dictionaries, where each dict is a filter, field operator and value
@@ -41,9 +41,6 @@ def query_builder(model, filters, select_columns):
     '''
     
     allowed_operators = ['exact', 'iexact', 'icontains', 'gt', 'gte', 'lt', 'lte']
-
-    for col in select_columns:
-        _validate_and_get_field(model, col)
 
     for rule in filters:
         _validate_and_get_field(model, rule['field'])
@@ -57,12 +54,32 @@ def query_builder(model, filters, select_columns):
             q_objects.append(Q(**{lookup: rule['value']}))
         
         combined_filters = reduce(operator.and_, q_objects)
-        queryset = model.objects.filter(combined_filters)
+        return model.objects.filter(combined_filters)
     else:
-        queryset = model.objects.all()
+        return model.objects.all()
 
-    rows = list(queryset.values_list(*select_columns))
+def format_table(queryset, select_columns, include_meta=True):
+    if not select_columns:
+        return {'headers': [], 'rows': []}
 
+    model = queryset.model
     headers = [_validate_and_get_field(model, name).verbose_name.title() for name in select_columns]
+    
+    pks_and_values = queryset.values_list('pk', *select_columns)
 
-    return (headers, rows)
+    rows = []
+    for item in pks_and_values:
+        pk = item[0]
+        data = item[1:]
+        if include_meta:
+            model_name_str = model._meta.model_name
+            
+            rows.append({
+                'id': pk,
+                'model_name': model_name_str, # Use the corrected variable
+                'data': data
+            })
+        else:
+            rows.append({'data': data})
+
+    return {'headers': headers, 'rows': rows}

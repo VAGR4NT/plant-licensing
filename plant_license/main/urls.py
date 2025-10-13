@@ -7,6 +7,7 @@ urlpatterns = [
     path("view/", views.view_db_view, name="view_db"),
     path("generate-forms/", views.generate_forms_view, name="generate_forms"),
     path("update/", views.update_view, name="update"),
+    path('update/<str:model_name>/<int:pk>/', views.update_view, name='update'),
     path("user-info/", views.user_info_view, name="user_info"),
-    path("specific_view/<str:param>/", views.specific_view, name="specific_view"), 
+    path("specific_view/", views.specific_view, name="specific_view"), 
     ]
