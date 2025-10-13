@@ -46,7 +46,8 @@ def specific_view(request):
         'rows': [],
         'error_message': None,
         'result_count': None,
-        'request_get': request.GET, 
+        'request_get': request.GET,
+        'checked_columns': request.GET.getlist('columns'),
     }
 
     search_type = request.GET.get('search_type')

@@ -27,7 +27,7 @@
                     <label for="search_location">Location</label>
                 </div>
             </div>
-            <input class="search-bar" type="text" name="q" placeholder="Enter Business Name, Contact, Address, etc...">
+            <input class="search-bar" type="text" name="q" placeholder="Enter Business Name, Contact, Address, etc..." value="{{ request_get.q|default:'' }}">
         </fieldset>
 
          <details open>
@@ -49,7 +49,7 @@
                      <h3> {{table}} </h3>
                         {% for field_name in fields %}
                          <label>
-                            <input type="checkbox" name="columns" value="{{ field_name.name }}"> 
+                            <input type="checkbox" name="columns" value="{{ field_name.name }}" {% if field_name.name in checked_columns %}checked{% endif %}> 
                               {{ field_name.label|title }}
                          </label>
                         {% endfor %} 
