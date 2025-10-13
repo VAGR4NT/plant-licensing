@@ -57,7 +57,7 @@ def specific_view(request):
                 filters = []
                 if request.GET.get('q'):
                     primary_search_fields = {
-                        'business': 'business_name', 'supplier': 'suppliers__supplier_name', 'location': 'address'
+                        'business': 'business_name', 'supplier': 'suppliers__supplier_name', 'location': 'locations__address'
                     }
                     search_field = primary_search_fields.get(search_type)
                     if search_field:
