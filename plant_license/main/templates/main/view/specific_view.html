@@ -4,79 +4,84 @@
 {% block title %} View {% endblock %}
 
 {% block page_css %}
-    <link rel="stylesheet" href="{% static 'css/view.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/specific-view.css' %}" />
 {% endblock %}
 
 {% block content %}
 
-<main>
       {{ table_fields|json_script:"table-fields-data" }}
-      <form method="get" action=""> 
-      <fieldset>
-            <legend>Primary Search</legend>
-            <div class="search-context">
-                <label>Search For:</label>
-                <div class="search-options">
-                    <input type="radio" id="search_business" name="search_type" value="business" checked>
-                    <label for="search_business">Business</label>
+<form method="get" class="searchForm" action="">
+  <fieldset class="search-area">
+    <legend>Search Options</legend>
 
-                    <input type="radio" id="search_supplier" name="search_type" value="supplier">
-                    <label for="search_supplier">Supplier</label>
+    <div class="search-and-filters">
+      <!-- Search block -->
+      <div class="search-block">
+        <div class="search-context">
+          <div class="search-options">
+            <input type="radio" id="search_business" name="search_type" value="business" checked>
+            <label for="search_business">Business</label>
 
-                    <input type="radio" id="search_location" name="search_type" value="location">
-                    <label for="search_location">Location</label>
-                </div>
-            </div>
-            <input class="search-bar" type="text" name="q" placeholder="Enter Business Name, Contact, Address, etc..." value="{{ request_get.q|default:'' }}">
-        </fieldset>
+            <input type="radio" id="search_supplier" name="search_type" value="supplier">
+            <label for="search_supplier">Supplier</label>
 
-         <details open>
-                <summary>Advanced Filters</summary>
-                <div class="filter-content">
-                    <div id="filter-list-container">
-                   
-                    </div>
-                    <button type="button" id="add-filter-btn">+ Add Filter</button>
-                </div>
-         </details>
+            <input type="radio" id="search_location" name="search_type" value="location">
+            <label for="search_location">Location</label>
+          </div>
+        </div>
 
-        <fieldset>
-            <legend>Select Columns to Display</legend>
-            <div class="column-grid">
-               
-               {% for table, fields in table_fields.items %}
-                  <div class = "column_box">
-                     <h3> {{table}} </h3>
-                        {% for field_name in fields %}
-                         <label>
-                            <input type="checkbox" name="columns" value="{{ field_name.name }}" {% if field_name.name in checked_columns %}checked{% endif %}> 
-                              {{ field_name.label|title }}
-                         </label>
-                        {% endfor %} 
-                  </div>
+        <input class="search-bar" type="text" name="q"
+          placeholder="Enter Business Name, Contact, Address, etc..."
+          value="{{ request_get.q|default:'' }}">
+      </div>
 
-               {% endfor %}
+      <!-- Advanced filters block -->
+      <details class="advanced-filters" open>
+        <summary>Advanced Filters</summary>
+        <div class="filter-content">
+          <div id="filter-list-container"></div>
+          <button type="button" id="add-filter-btn">+ Add Filter</button>
+        </div>
+      </details>
+    </div>
+  </fieldset>
 
-              </div>
+  <fieldset class="basic-filter-form">
+    <legend>Select Columns to Display</legend>
+    <div class="column_container">
+      {% for table, fields in table_fields.items %}
+      <div class="column_box">
+        <h3>{{ table }}</h3>
+        {% for field_name in fields %}
+        <label>
+          <input type="checkbox" name="columns" value="{{ field_name.name }}"
+            {% if field_name.name in checked_columns %}checked{% endif %}>
+          {{ field_name.label|title }}
+        </label>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </fieldset>
 
-        </fieldset>
-        <button type="submit">Generate Report</button>
-         </form>
+  <button type="submit" id="reportBtn" class="btn">Generate Report</button>
+</form>
 
-         <section style="margin-top: 2em;">
-        <h2>Results</h2>
-        {% if error_message %}
-            <p style="color: red;">{{ error_message }}</p>
-        {% elif result_count is not None %}
-            <p>Found {{ result_count }} matching record(s). Showing {{ rows|length }}.</p>
-            {% if rows %}
+<section class="results-section">
+    <h2>Results</h2>
+    {% if error_message %}
+        <p style="color: red;">{{ error_message }}</p>
+    {% elif result_count is not None %}
+        <p>Found {{ result_count }} matching record(s). Showing {{ rows|length }}.</p>
+        {% if rows %}
+        <div class="table-container">  <!-- Add this wrapper -->
             <table class="results-table">
                 <thead>
                     <tr>
                         {% for header in headers %}
                             <th>{{ header }}</th>
                         {% endfor %}
-                        <th>Actions</th> <!-- Header for the Edit button -->
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,13 +97,12 @@
                     {% endfor %}
                 </tbody>
             </table>
-            {% endif %}
-        {% else %}
-            <p>No query submitted yet. Please generate a report.</p>
+        </div>
         {% endif %}
-    </section>
-
-</main>
+    {% else %}
+        <p>No query submitted yet. Please generate a report.</p>
+    {% endif %}
+</section>
 
    <script>
      document.addEventListener('DOMContentLoaded', function() {

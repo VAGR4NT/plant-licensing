@@ -1,0 +1,173 @@
+/* --------------------------------
+   Global Layout
+----------------------------------- */
+.searchForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* --------------------------------
+   Search Area (fieldset)
+----------------------------------- */
+
+.search-area {
+  width: 100%;
+  max-width: 1200px;
+  margin: 1rem auto;
+  padding: 1.5rem 2rem;
+  border: 1px solid #ccc;
+  border-radius: 0.75rem;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* search and filters row */
+.search-and-filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* search left, filters right */
+  gap: 2rem;
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* search block styling */
+.search-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.search-bar {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+/* advanced filters stays inside same box */
+.advanced-filters {
+  width: 100%;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+/* --------------------------------
+   Columns to Display
+----------------------------------- */
+fieldset {
+  background: #fafafa;
+}
+
+/* Consistent horizontal layout container */
+.search-area,
+.column_container {
+  max-width: 1200px;
+  margin: 1rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+.basic-filter-form legend {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  margin: 2rem auto;
+  margin-bottom: 0rem;
+  padding: 1.5rem 2rem;
+  border: 1px solid #ccc;
+  border-radius: 0.75rem;
+  background: #fafafa;
+  max-width: 1200px;
+}
+
+.column_container {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 2rem auto;
+}
+
+.column_box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  margin: 0.5rem;
+  border-radius: 0.5rem;
+  width: 250px;
+  background: white;
+}
+
+.column_box h3 {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.results-section {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.table-container {
+  overflow-x: auto;
+  width: 100%;
+  margin: 1rem 0;
+  border: 1px solid #e0e0e0; /* Optional: visual boundary */
+  border-radius: 4px;
+  text-align: center;
+}
+
+.table-container .results-table {
+  display: inline-table; /* lets margin auto / text-align: center work */
+  table-layout: auto;
+}
+
+.results-table {
+  border-collapse: collapse;
+  table-layout: auto;
+  width: max-content; /* This prevents column crushing */
+}
+
+.results-table th,
+.results-table td {
+  white-space: nowrap;
+  padding: 8px 16px;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.results-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  position: sticky;
+  left: 0; /* Keep headers visible when scrolling */
+}
+
+/* Ensure the Actions column has consistent width */
+.results-table th:last-child,
+.results-table td:last-child {
+  min-width: 100px;
+  text-align: center;
+}
+
+/* --------------------------------
+   Misc
+----------------------------------- */
+#reportBtn {
+  margin: 2rem auto;
+  display: block;
+}
+
+legend {
+  font-weight: bold;
+  text-align: center;
+}
