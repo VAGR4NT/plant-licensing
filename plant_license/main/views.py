@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, Http404
+from django.urls import reverse
+from django import forms
 from .models import Suppliers
 from .models import Businesses, Locations, Licenses
 from django.db import connection 
-from .query_builder import MODEL_MAP, query_builder, format_table
+from .query_builder import MODEL_MAP, query_builder, format_table, _validate_and_get_field
 import json
 
 def home_view(request):
@@ -101,48 +103,75 @@ def generate_forms_view(request):
     return render(request, "main/generate-forms/index.html")
 
 
-def update_view(request, model_name, pk):
-    """
-    Handles displaying and processing the edit form for a single database object.
-    """
-    model_class = MODEL_MAP.get(model_name)
-    if not model_class:
-        raise Http404(f"Invalid model type '{model_name}' specified.")
+def update_view(request, pk):
+    # 1. Get the main object and the columns to edit from the request
+    business = get_object_or_404(Businesses, pk=pk)
+    columns_to_edit = request.GET.getlist('columns')
 
-    # Use get_object_or_404 to safely fetch the object or return a Not Found page
-    instance = get_object_or_404(model_class, pk=pk)
+    # A helper to get related objects without duplicates
+    def get_instance_from_path(root_instance, path):
+        instance = root_instance
+        parts = path.split('__')
+        for part in parts[:-1]: # Go through relations (e.g., 'locations')
+            instance = getattr(instance, part).first() # Or other logic to get the right one
+            if not instance: return None
+        return instance
 
     if request.method == 'POST':
-        # --- Handle the SAVE action ---
-        for field in model_class._meta.fields:
-            # Don't try to change the primary key
-            if not field.primary_key:
-                submitted_value = request.POST.get(field.name)
-                # This check is important. It ensures that if a field isn't in the form,
-                # we don't accidentally overwrite its value with None.
-                if submitted_value is not None:
-                    setattr(instance, field.name, submitted_value)
-        instance.save()
-        # Redirect back to the same page to show a confirmation or the updated data
-        return redirect('update_page', model_name=model_name, pk=pk)
+        # 4. Handle SAVING the data
+        instances_to_save = {}
+        for field_path, value in request.POST.items():
+            if field_path == 'csrfmiddlewaretoken':
+                continue
 
-    # --- Handle the initial GET request to display the form ---
-    fields_to_edit = []
-    for field in model_class._meta.fields:
-        fields_to_edit.append({
-            'name': field.name,
-            'label': field.verbose_name.title(),
-            'value': getattr(instance, field.name),
-            'is_readonly': field.primary_key, # Make the ID field read-only in the form
-        })
+            instance = get_instance_from_path(business, field_path)
+            field_name = field_path.split('__')[-1]
 
+            if instance:
+                setattr(instance, field_name, value)
+                # Store the instance to save it only once
+                instances_to_save[instance.pk] = instance
+        
+        for instance in instances_to_save.values():
+            instance.save()
+            
+        return redirect("success")
+
+    # 2. Dynamically build the form
+    class DynamicForm(forms.Form):
+        pass
+
+    form = DynamicForm()
+    
+    for field_path in columns_to_edit:
+        try:
+            # Get the final model field object to know its type
+            field_object = _validate_and_get_field(Businesses, field_path)
+            
+            # Find the actual instance and its current value
+            instance = get_instance_from_path(business, field_path)
+            field_name = field_path.split('__')[-1]
+            initial_value = getattr(instance, field_name) if instance else ''
+
+            # Create a form field and add it to our dynamic form
+            # The field's name in the form is the full path, which is crucial for saving
+            form.fields[field_path] = forms.CharField(label=field_object.verbose_name.title(), initial=initial_value)
+        
+        except (ValueError, AttributeError):
+            # Skip fields that can't be found or resolved
+            continue
+            
+    # 3. Render the page with the dynamically generated form
     context = {
-        'instance': instance,
-        'fields': fields_to_edit,
-        'model_name': model_name,
+        'form': form,
+        'business': business
     }
-    return render(request, "main/update/index.html")
 
+
+    return render(request, "main/update/index.html", context)
+
+def update_success(request):
+    return render(request, "main/update/success.html")
 
 def user_info_view(request):
     return render(request, "main/user-info/index.html")

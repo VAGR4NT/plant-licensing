@@ -2,44 +2,12 @@
 
 {% block title %} Update {% endblock %} {% block content %}
 
-<main style="max-width: 800px; margin: auto; padding: 2em;">
+<form method="post">
+    {% csrf_token %}
     
-    <!-- Use the instance's __str__ method for a user-friendly title -->
-    <h1>Editing {{ model_name|title }}: {{ instance }}</h1>
+    {{ form.as_p }}
 
-    <!-- A form that submits back to the same URL using the POST method -->
-    <form method="post" action="">
-        <!-- Django requires this for security -->
-        {% csrf_token %}
-
-        <table style="width: 100%; border-collapse: collapse;">
-            <!-- Loop through the fields prepared by the update_view -->
-            {% for field in fields %}
-                <tr style="border-bottom: 1px solid #eee;">
-                    <th style="width: 30%; text-align: left; padding: 1em;">
-                        <label for="id_{{ field.name }}">{{ field.label }}</label>
-                    </th>
-                    <td style="padding: 1em;">
-                        <input 
-                            type="text" 
-                            name="{{ field.name }}" 
-                            id="id_{{ field.name }}"
-                            value="{{ field.value|default:'' }}"
-                            {% if field.is_readonly %}readonly style="background-color: #f0f0f0;"{% endif %}
-                            style="width: 95%; padding: 0.5em;"
-                        >
-                    </td>
-                </tr>
-            {% endfor %}
-        </table>
-
-        <div style="text-align: right; margin-top: 2em;">
-            <a href="{% url 'specific_view' %}">Back to Search</a>
-            <button type="submit" style="padding: 0.8em 1.5em; background-color: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                Save Changes
-            </button>
-        </div>
-    </form>
-</main>
+    <button type="submit">Save Changes</button>
+</form>
 
 {% endblock %}
