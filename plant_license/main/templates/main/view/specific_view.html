@@ -120,7 +120,7 @@
           {% for row in rows %}
           <tr>
             <td>
-              <a href="{% url 'update_pk' row.id %}?columns={{ checked_columns|join:"&columns=" }}">Edit</a>
+              <a href="{% url 'update' 'business' row.id %}">Edit</a>
             </td>
             {% for cell in row.data %}
               <td>{{ cell }}</td>

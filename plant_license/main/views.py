@@ -229,6 +229,8 @@ def update_view(request, model, pk):
 def update_success(request):
     return render(request, "main/update/success.html")
 
+def user_info_view(request):
+    return render(request, "main/user-info/index.html")
 
 def account_view(request):
     return render(request, "main/account/index.html")
