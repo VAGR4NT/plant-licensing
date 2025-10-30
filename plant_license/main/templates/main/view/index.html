@@ -13,17 +13,14 @@
 
 <ul class="view_list"> 
   <li>
-      <a href="{% url 'specific_view' %}" class="btn"> Business Name</a>
+      <a href="{% url 'specific_view' %}" class="btn"> Businesses</a>
   </li>
-  <li>
-      <a href="{% url 'specific_view' %}" class="btn">Address</a>
-  </li>
-  <li>
-      <a href="{% url 'specific_view' %}" class="btn">City</a>
-  </li>
-  <li>
-      <a href="{% url 'specific_view' %}" class="btn">Supplier</a>
-  </li>
+
+   {% for model_name, model_object in independent_models.items %}
+      <li>
+         <a href="{% url 'specific_view' %}" class="btn">{{model_name}}</a>
+      </li>
+   {% endfor %}
 </ul>
 
 {% endblock %}

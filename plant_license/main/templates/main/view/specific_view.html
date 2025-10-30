@@ -91,7 +91,7 @@
                             <td>{{ cell }}</td>
                         {% endfor %}
                         <td>
-                           <a href="{% url 'update' row.id %}?columns={{ checked_columns|join:"&columns=" }}">Edit</a>
+                           <a href="{% url 'update' 'business' row.id %}">Edit</a>
                         </td>
                     </tr>
                     {% endfor %}

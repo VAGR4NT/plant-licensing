@@ -81,7 +81,7 @@ class BusinessPlantTypes(models.Model):
     pk = models.CompositePrimaryKey('business_id', 'plant_type_id')
     business = models.ForeignKey('Businesses', models.DO_NOTHING)
     plant_type = models.ForeignKey('PlantTypes', models.DO_NOTHING)
-
+    is_through_table = True
     class Meta:
         managed = False
         db_table = 'business_plant_types'
@@ -91,7 +91,7 @@ class BusinessSellingSeasons(models.Model):
     pk = models.CompositePrimaryKey('business_id', 'season_id')
     business = models.ForeignKey('Businesses', models.DO_NOTHING)
     season = models.ForeignKey('SellingSeasons', models.DO_NOTHING)
-
+    is_through_table = True
     class Meta:
         managed = False
         db_table = 'business_selling_seasons'
@@ -101,7 +101,7 @@ class BusinessShippingRegions(models.Model):
     pk = models.CompositePrimaryKey('business_id', 'region_id')
     business = models.ForeignKey('Businesses', models.DO_NOTHING)
     region = models.ForeignKey('ShippingRegions', models.DO_NOTHING)
-
+    is_through_table = True
     class Meta:
         managed = False
         db_table = 'business_shipping_regions'
@@ -111,7 +111,7 @@ class BusinessSuppliers(models.Model):
     pk = models.CompositePrimaryKey('business_id', 'supplier_id')
     business = models.ForeignKey('Businesses', models.DO_NOTHING, related_name='supplier_links')
     supplier = models.ForeignKey('Suppliers', models.DO_NOTHING, related_name='business_links')
-
+    is_through_table = True
     class Meta:
         managed = False
         db_table = 'business_suppliers'
@@ -121,7 +121,7 @@ class BusinessTypeMap(models.Model):
     pk = models.CompositePrimaryKey('business_id', 'type_id')
     business = models.ForeignKey('Businesses', models.DO_NOTHING)
     type = models.ForeignKey('BusinessTypes', models.DO_NOTHING)
-
+    is_through_table = True
     class Meta:
         managed = False
         db_table = 'business_type_map'
@@ -130,7 +130,7 @@ class BusinessTypeMap(models.Model):
 class BusinessTypes(models.Model):
     type_id = models.AutoField(primary_key=True)
     type_name = models.CharField(max_length=256, blank=True, null=True)
-
+    is_through_table = True
     class Meta:
         managed = False
         db_table = 'business_types'
@@ -162,6 +162,10 @@ class Businesses(models.Model):
     num_labels = models.IntegerField(blank=True, null=True)
 
     suppliers = models.ManyToManyField('Suppliers', through='BusinessSuppliers', related_name='businesses')
+    plant_types = models.ManyToManyField('PlantTypes', through='BusinessPlantTypes', related_name='businesses')
+    selling_seasons = models.ManyToManyField('SellingSeasons', through='BusinessSellingSeasons', related_name='businesses')
+    shipping_regions = models.ManyToManyField('ShippingRegions', through='BusinessShippingRegions', related_name='businesses')
+
 
     class Meta:
         managed = False
