@@ -53,18 +53,22 @@
        <div class="login">
         <h1>Sign In</h1>
 
-        <form>
+        <form method="post" action="{% url 'login' %}">
+          {% csrf_token %}
           <label for="username">Username</label>
-          <input type="text" id="username" name="username" />
+          <input type="text" id="username" name="username" required>
 
           <label for="password">Password</label>
-          <input type="text" id="password" name="password" />
-        </form>
-        <a href="" id="forgot">Forgot Password</a>
+          <input type="password" id="password" name="password" required>
 
-        <div class="login-btn">
-          <button class="btn">Login</button>
-        </div>
+          <div class="login-btn">
+            <button class="btn" type="submit">Login</button>
+          </div>
+
+          {% if form.errors %}
+          <p class="error">Invalid username or password.</p>
+          {% endif %}
+        </form>
       </div>
     </main>
   </body>
