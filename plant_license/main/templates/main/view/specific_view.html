@@ -4,12 +4,12 @@
 {% block title %} View {% endblock %}
 
 {% block page_css %}
-    <link rel="stylesheet" href="{% static 'css/specific-view.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/specific-view.css' %}" />
 {% endblock %}
 
 {% block content %}
 
-      {{ table_fields|json_script:"table-fields-data" }}
+{{ table_fields|json_script:"table-fields-data" }}
 <form method="get" class="searchForm" action="">
   <fieldset class="search-area">
     <legend>Search Options</legend>
@@ -30,9 +30,13 @@
           </div>
         </div>
 
-        <input class="search-bar" type="text" name="q"
+        <input
+          class="search-bar"
+          type="text"
+          name="q"
           placeholder="Enter Business Name, Contact, Address, etc..."
-          value="{{ request_get.q|default:'' }}">
+          value="{{ request_get.q|default:'' }}"
+        >
       </div>
 
       <!-- Advanced filters block -->
@@ -48,17 +52,33 @@
 
   <fieldset class="basic-filter-form">
     <legend>Select Columns to Display</legend>
+
+    <div class="carousel-indicators">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+
     <div class="column_container">
       {% for table, fields in table_fields.items %}
       <div class="column_box">
         <h3>{{ table }}</h3>
-        {% for field_name in fields %}
-        <label>
-          <input type="checkbox" name="columns" value="{{ field_name.name }}"
-            {% if field_name.name in checked_columns %}checked{% endif %}>
-          {{ field_name.label|title }}
-        </label>
-        {% endfor %}
+
+        <!-- ✅ Wrapper for checkboxes -->
+        <div class="checkbox-wrapper {% if fields|length > 10 %}multi-column{% endif %}">
+          {% for field_name in fields %}
+          <label>
+            <input
+              type="checkbox"
+              name="columns"
+              value="{{ field_name.name }}"
+              {% if field_name.name in checked_columns %}checked{% endif %}
+            >
+            {{ field_name.label|title }}
+          </label>
+          {% endfor %}
+        </div>
       </div>
       {% endfor %}
     </div>
@@ -67,106 +87,61 @@
   <button type="submit" id="reportBtn" class="btn">Generate Report</button>
 </form>
 
-<section class="results-section">
-    <h2>Results</h2>
-    {% if error_message %}
-        <p style="color: red;">{{ error_message }}</p>
-    {% elif result_count is not None %}
-        <p>Found {{ result_count }} matching record(s). Showing {{ rows|length }}.</p>
-        {% if rows %}
-        <div class="table-container">  <!-- Add this wrapper -->
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        {% for header in headers %}
-                            <th>{{ header }}</th>
-                        {% endfor %}
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in rows %}
-                    <tr>
-                        {% for cell in row.data %}
-                            <td>{{ cell }}</td>
-                        {% endfor %}
-                        <td>
-                           <a href="{% url 'update' 'business' row.id %}">Edit</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
-    {% else %}
-        <p>No query submitted yet. Please generate a report.</p>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector(".searchForm");
+    if (!form) return;
+
+    form.addEventListener("submit", function () {
+      // Append anchor before submission so page reload jumps to table
+      form.action = form.action.split("#")[0] + "#results";
+    });
+  });
+</script>
+
+<section id="results" class="results-section">
+  <h2>Results</h2>
+  {% if error_message %}
+    <p style="color: red;">{{ error_message }}</p>
+  {% elif result_count is not None %}
+    <p>Found {{ result_count }} matching record(s). Showing {{ rows|length }}.</p>
+    {% if rows %}
+    <div class="table-container">
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Actions</th>
+            {% for header in headers %}
+              <th>{{ header }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>
+              <a href="{% url 'update_pk' row.id %}?columns={{ checked_columns|join:"&columns=" }}">Edit</a>
+            </td>
+            {% for cell in row.data %}
+              <td>{{ cell }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
     {% endif %}
+  {% else %}
+    <p>No query submitted yet. Please generate a report.</p>
+  {% endif %}
 </section>
 
-   <script>
-     document.addEventListener('DOMContentLoaded', function() {
-            const tableFieldsData = JSON.parse(document.getElementById('table-fields-data').textContent); 
-            const operators = {{ operators|safe }};
-            
-            console.log(tableFieldsData);
+{% endblock %}
 
-            const addFilterBtn = document.getElementById('add-filter-btn');
-            const filterContainer = document.getElementById('filter-list-container');
-            let filterRowCount = 0;
+{% block page_js %}
 
-            addFilterBtn.addEventListener('click', createFilterRow);
-
-            function createFilterRow() {
-                filterRowCount++;
-                const row = document.createElement('div');
-                row.className = 'filter-row';
-
-                // 1. Group Selector
-                const groupSelect = document.createElement('select');
-                groupSelect.name = `adv_group_${filterRowCount}`;
-                groupSelect.innerHTML = `<option value="">-- Select Group --</option>` + 
-                    Object.keys(tableFieldsData).map(group => `<option value="${group}">${group}</option>`).join('');
-
-                // 2. Field Selector
-                const fieldSelect = document.createElement('select');
-                fieldSelect.name = `adv_field_${filterRowCount}`;
-                fieldSelect.innerHTML = `<option value="">-- Select Field --</option>`;
-
-                // 3. Operator Selector
-                const opSelect = document.createElement('select');
-                opSelect.name = `adv_op_${filterRowCount}`;
-                opSelect.innerHTML = `<option value="">-- Operator --</option>` +
-                    operators.map(op => `<option value="${op}">${op}</option>`).join('');
-
-                // 4. Value Input
-                const valueInput = document.createElement('input');
-                valueInput.type = 'text';
-                valueInput.name = `adv_val_${filterRowCount}`;
-                valueInput.placeholder = 'Value...';
-
-                // 5. Remove Button
-                const removeBtn = document.createElement('button');
-                removeBtn.type = 'button';
-                removeBtn.className = 'remove-filter-btn';
-                removeBtn.textContent = 'X';
-                removeBtn.onclick = () => row.remove();
-
-                // --- Event Listener to link Group and Field dropdowns ---
-                groupSelect.addEventListener('change', function() {
-                    const selectedGroup = this.value;
-                    const fields = tableFieldsData[selectedGroup] || [];
-                    
-                    // Clear and update field dropdown
-                    fieldSelect.innerHTML = `<option value="">-- Select Field --</option>` +
-                        fields.map(field => `<option value="${field.name}">${field.label}</option>`).join('');
-                });
-
-                row.append(groupSelect, fieldSelect, opSelect, valueInput, removeBtn);
-                filterContainer.appendChild(row);
-            }
-        }); 
-   </script>
+<script src="{% static 'js/view/specific_view_filter.js' %}"></script>
+<script src="{% static 'js/view/specific_view_carousel.js' %}"></script>
 
 {% endblock %}
 

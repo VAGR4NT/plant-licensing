@@ -1,0 +1,155 @@
+/* =========================================================
+   ACCOUNT PAGE STYLES
+========================================================= */
+
+/* Layout */
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  min-height: calc(100vh - 200px);
+  background-color: var(--color-wildcat-white);
+}
+
+/* Title */
+h1 {
+  color: var(--color-midnight);
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  border-bottom: 3px solid var(--color-bluegrass);
+  padding-bottom: 0.5rem;
+  letter-spacing: 0.5px;
+}
+
+/* Info card */
+.info-block {
+  background-color: #f8f9fb;
+  border: 1px solid var(--color-cool-neutral);
+  border-radius: 1rem;
+  padding: 2rem 2.5rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.info-block p {
+  font-size: 1.1rem;
+  color: var(--color-midnight);
+  margin: 0.75rem 0;
+}
+
+.info-block strong {
+  color: var(--color-wildcat-blue);
+}
+
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* Normalize buttons and links for consistent sizing */
+.actions .btn,
+.actions .admin-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font: inherit;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  padding: 0.75rem 1.75rem;
+  border: none;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.15s ease;
+  min-width: 130px;
+}
+
+/* Primary button */
+.actions .btn {
+  background-color: var(--color-wildcat-blue);
+  color: var(--color-wildcat-white);
+  font-weight: 600;
+}
+
+.actions .btn:hover,
+.actions .btn:focus {
+  background-color: var(--color-bluegrass);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+/* Secondary (Admin) button */
+.actions .admin-link {
+  background-color: var(--color-goldenrod);
+  color: var(--color-midnight);
+  font-weight: 600;
+}
+
+.actions .admin-link:hover,
+.actions .admin-link:focus {
+  background-color: var(--color-sunset);
+  color: var(--color-wildcat-white);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+/* =========================================================
+   MOBILE TWEAKS
+========================================================= */
+@media (max-width: 768px) {
+  main {
+    justify-content: flex-start;
+    padding-top: 1.25rem;
+    min-height: auto;
+  }
+
+  .info-block {
+    padding: 1.75rem 1.5rem;
+  }
+
+  .actions {
+    flex-direction: column-reverse; /* this puts admin on top */
+    align-items: center;
+  }
+
+  .actions .btn,
+  .actions .admin-link {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+/* =========================================================
+   MOBILE SAFARI / TAP BEHAVIOR FIXES
+========================================================= */
+
+/* Prevent lingering tap/hover/focus styling on iOS */
+.actions .btn,
+.actions .admin-link {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Remove persistent outline or shadows after admin page return */
+.actions .btn:focus,
+.actions .admin-link:focus {
+  box-shadow: none;
+  outline: none;
+}
