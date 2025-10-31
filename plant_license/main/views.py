@@ -310,12 +310,6 @@ def download_nursery_pdf(request, business_id: int):
     # Choose a representative location (adjust selection rule if needed)
     location = Locations.objects.filter(business=biz).order_by("location_id").first()
 
-    # Suppliers (many-to-many via join)
-    supplier_names = Suppliers.objects.filter(
-        businesssuppliers__business=biz
-    ).values_list("supplier_name", flat=True)
-    suppliers_text = "\n".join([s for s in supplier_names if s])
-
     # Fees: $40 + $1.50 per acre
     acreage = float(biz.acreage or 0)
     amount_due_val = 40.00 + 1.50 * acreage
