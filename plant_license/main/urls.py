@@ -2,6 +2,7 @@ from django.urls import path
 from django.views.generic import RedirectView
 from django.contrib.auth import views as auth_views
 from . import views
+from .views import download_nursery_pdf
 
 urlpatterns = [
     # Root redirect → /login/
@@ -23,8 +24,15 @@ urlpatterns = [
     path("update/", views.update_view, name="update"),
     path("update/<int:pk>/", views.update_view, name="update_pk"),
     path("success/", views.update_success, name="success"),
-    path('update/<str:model>/<int:pk>/', views.update_view, name='update'),
+    path("update/<str:model>/<int:pk>/", views.update_view, name="update"),
     path("user-info/", views.user_info_view, name="user_info"),
-    path("specific_view/", views.specific_view, name="specific_view"), 
+    path("specific_view/", views.specific_view, name="specific_view"),
     path("account/", views.account_view, name="account"),
+    path("nursery_generate/", views.nursery_generate, name="nursery_generate"),
+    path("dealer_generate/", views.dealer_generate, name="dealer_generate"),
+    path(
+        "nursery/<int:business_id>/download/",
+        download_nursery_pdf,
+        name="download_nursery_pdf",
+    ),
 ]
