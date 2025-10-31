@@ -3,8 +3,6 @@ from django.http import HttpResponse, Http404
 from django.urls import reverse
 from django import forms
 from django.forms import modelform_factory
-from .models import Suppliers
-from .models import Businesses, Locations, Licenses
 from django.db import connection
 from .query_builder import (
     MODEL_MAP,
@@ -19,7 +17,6 @@ from django.db.models import ForeignKey, OneToOneField, ManyToManyField
 from io import BytesIO
 from pathlib import Path
 from django.conf import settings
-from django.http import HttpResponse, Http404
 from django.utils import timezone
 
 from pypdf import PdfReader, PdfWriter
