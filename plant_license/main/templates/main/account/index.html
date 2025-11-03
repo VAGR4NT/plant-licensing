@@ -1,0 +1,48 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %} Account {% endblock %}
+
+{% block page_css %}
+    <link rel="stylesheet" href="{% static 'css/account.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+<h1> Account Information </h1>
+<div class="info-block">
+  <p><strong>Username:</strong> {{ user.username }}</p>
+  <p><strong>Email:</strong> {{ user.email|default:"(not provided)" }}</p>
+  <p><strong>First name:</strong> {{ user.first_name|default:"(not provided)" }}</p>
+  <p><strong>Last name:</strong> {{ user.last_name|default:"(not provided)" }}</p>
+</div>
+
+<div class="actions">
+  <form action="{% url 'logout' %}" method="post" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn">Logout</button>
+  </form>
+  {% if user.is_staff or user.is_superuser %}
+    <a href="{% url 'admin:index' %}" class="btn admin-link">Admin Dashboard</a>
+  {% endif %}
+</div>
+
+<!-- fixes weird style issue when coming back from admin page -->
+<script>
+  function clearButtonFocus() {
+    document.activeElement?.blur();
+    document.querySelectorAll(".admin-link, .actions .btn").forEach(el => el.blur());
+  }
+
+  // Normal load
+  window.addEventListener("load", clearButtonFocus);
+
+  // Back-forward cache restore
+  window.addEventListener("pageshow", clearButtonFocus);
+
+  // As a fallback, when user taps anywhere (iOS sometimes needs this)
+  document.addEventListener("touchstart", clearButtonFocus, { once: true });
+</script>
+
+
+{% endblock %}

@@ -1,31 +1,147 @@
 {% extends "main/base.html" %}
 {% load static %}
-{% block title %} Specific View {% endblock %}>
 
-{% block page_css %} 
-   <link rel="stylesheet" href="{% static 'css/specific_view.css' %}">
+{% block title %} View {% endblock %}
 
+{% block page_css %}
+  <link rel="stylesheet" href="{% static 'css/specific-view.css' %}" />
 {% endblock %}
 
 {% block content %}
 
-<h1> Specific View </h1>
+{{ table_fields|json_script:"table-fields-data" }}
+<form method="get" class="searchForm" action="">
+  <fieldset class="search-area">
+    <legend>Search Options</legend>
 
-<form action="{% url 'specific_view' category=category %}" method="get">
-   <input type="text" name="q" value="{{ query }}" placeholder="Search....">
-   <button type="submit">Search</button>
+    <div class="search-and-filters">
+      <!-- Search block -->
+      <div class="search-block">
+        <div class="search-context">
+          <div class="search-options">
+            <input type="radio" id="search_business" name="search_type" value="business" checked>
+            <label for="search_business">Business</label>
+
+            <input type="radio" id="search_supplier" name="search_type" value="supplier">
+            <label for="search_supplier">Supplier</label>
+
+            <input type="radio" id="search_location" name="search_type" value="location">
+            <label for="search_location">Location</label>
+          </div>
+        </div>
+
+        <input
+          class="search-bar"
+          type="text"
+          name="q"
+          placeholder="Enter Business Name, Contact, Address, etc..."
+          value="{{ request_get.q|default:'' }}"
+        >
+      </div>
+
+      <!-- Advanced filters block -->
+      <details class="advanced-filters" open>
+        <summary>Advanced Filters</summary>
+        <div class="filter-content">
+          <div id="filter-list-container"></div>
+          <button type="button" id="add-filter-btn">+ Add Filter</button>
+        </div>
+      </details>
+    </div>
+  </fieldset>
+
+  <fieldset class="basic-filter-form">
+    <legend>Select Columns to Display</legend>
+
+    <div class="carousel-indicators">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+
+    <div class="column_container">
+      {% for table, fields in table_fields.items %}
+      <div class="column_box">
+        <h3>{{ table }}</h3>
+
+        <!-- ✅ Wrapper for checkboxes -->
+        <div class="checkbox-wrapper {% if fields|length > 10 %}multi-column{% endif %}">
+          {% for field_name in fields %}
+          <label>
+            <input
+              type="checkbox"
+              name="columns"
+              value="{{ field_name.name }}"
+              {% if field_name.name in checked_columns %}checked{% endif %}
+            >
+            {{ field_name.label|title }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <button type="submit" id="reportBtn" class="btn">Generate Report</button>
 </form>
 
-    {% if businesses %}
-        <ul>
-            {% for business in businesses %}
-                <li><strong>Address:</strong> {{ business.mo_address }}
-                    <br><em>(Name: {{ business.business_name }})</em>
-                </li>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector(".searchForm");
+    if (!form) return;
+
+    form.addEventListener("submit", function () {
+      // Append anchor before submission so page reload jumps to table
+      form.action = form.action.split("#")[0] + "#results";
+    });
+  });
+</script>
+
+<section id="results" class="results-section">
+  <h2>Results</h2>
+  {% if error_message %}
+    <p style="color: red;">{{ error_message }}</p>
+  {% elif result_count is not None %}
+    <p>Found {{ result_count }} matching record(s). Showing {{ rows|length }}.</p>
+    {% if rows %}
+    <div class="table-container">
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Actions</th>
+            {% for header in headers %}
+              <th>{{ header }}</th>
             {% endfor %}
-        </ul>
-    {% elif query %}
-        <p>No businesses found for "{{ query }}".</p>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>
+              <a href="{% url 'update' 'business' row.id %}">Edit</a>
+            </td>
+            {% for cell in row.data %}
+              <td>{{ cell }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
     {% endif %}
+  {% else %}
+    <p>No query submitted yet. Please generate a report.</p>
+  {% endif %}
+</section>
 
 {% endblock %}
+
+{% block page_js %}
+
+<script src="{% static 'js/view/specific_view_filter.js' %}"></script>
+<script src="{% static 'js/view/specific_view_carousel.js' %}"></script>
+
+{% endblock %}
+
