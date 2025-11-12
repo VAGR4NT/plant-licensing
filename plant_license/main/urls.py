@@ -12,7 +12,7 @@ urlpatterns = [
         "login/",
         auth_views.LoginView.as_view(
             template_name="main/login/index.html",
-            redirect_authenticated_user=True,  # ✅ key addition
+            redirect_authenticated_user=True,
         ),
         name="login",
     ),
@@ -24,7 +24,7 @@ urlpatterns = [
     path("update/", views.update_view, name="update"),
     path("update/<int:pk>/", views.update_view, name="update_pk"),
     path("success/", views.update_success, name="success"),
-    path("update/<str:model>/<int:pk>/", views.update_view, name="update"),
+    path('update/<int:ct>/<int:pk>/', views.update_view, name='update'),
     path("user-info/", views.user_info_view, name="user_info"),
     path("specific_view/", views.specific_view, name="specific_view"),
     path("account/", views.account_view, name="account"),
