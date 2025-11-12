@@ -174,11 +174,16 @@ def update_view(request, ct, pk):
 
 
     if request.method == 'POST':
+        if 'delete' in request.POST:
+            master_object.delete()
+            return redirect(request.META.get('HTTP_REFERER', '/'))
+        
         form = DynamicModelForm(request.POST, instance=master_object)
         
         if form.is_valid():
             form.save()
             return redirect(request.path)
+ 
     else:
         form = DynamicModelForm(instance=master_object)
 

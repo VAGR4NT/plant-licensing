@@ -235,7 +235,7 @@ class DjangoSession(models.Model):
 
 class Licenses(models.Model):
     license_id = models.AutoField(primary_key=True)
-    location = models.ForeignKey('Locations', models.DO_NOTHING, blank=True, null=True)
+    location = models.ForeignKey('Locations', on_delete=models.CASCADE, blank=True, null=True)
     license_year = models.IntegerField(blank=True, null=True)
     check_number = models.CharField(max_length=256, blank=True, null=True)
     license_number = models.IntegerField(unique=True, blank=True, null=True)

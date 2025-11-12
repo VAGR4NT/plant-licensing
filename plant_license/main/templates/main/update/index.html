@@ -46,7 +46,7 @@
                         <div class="child-table-actions">
 				<a href="{% url 'update' ct=info.model pk=item.pk %}">Edit</a> <form method="POST" action={% url 'update' ct=info.model pk=item.pk %}> {% csrf_token %}
                                 <input type="hidden" name="item_to_delete" value="{{ item.pk }}">
-                                <button type="submit">Remove</button>
+                                <button type="submit" name='delete' value="1">Remove</button>
                             </form>
                         </div>
                     </td>
