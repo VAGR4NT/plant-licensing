@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, Http404
 from django.urls import reverse
 from django import forms
+from django.contrib.contenttypes.models import ContentType
 from django.forms import modelform_factory
 from .models import Suppliers
 from .models import Businesses, Locations, Licenses
@@ -54,6 +55,7 @@ def specific_view(request):
         "operators": ["exact", "iexact", "icontains", "gt", "gte", "lt", "lte"],
         "headers": [],
         "rows": [],
+        "business_model_id": ContentType.objects.get_for_model(Businesses).id,
         "error_message": None,
         "result_count": None,
         "request_get": request.GET,
@@ -157,17 +159,17 @@ def generate_forms_view(request):
     return render(request, "main/generate-forms/index.html")
 
 
-def update_view(request, model, pk):
+def update_view(request, ct, pk):
     """
     A dynamic view to display and update any model instance ("master_object")
     and list its related "child" objects.
     """
-    
-    model_class = MODEL_MAP[model]
-    
+   
+    model_class = ContentType.objects.get(id=ct).model_class()
+
     master_object = get_object_or_404(model_class, pk=pk)
 
-    local_field_names = [field.name for field in model_class._meta.fields]
+    local_field_names = [field.name for field in model_class._meta.fields if not field.is_relation]
     DynamicModelForm = modelform_factory(model_class, fields=local_field_names) 
 
 
@@ -204,7 +206,7 @@ def update_view(request, model, pk):
                 
                 related_sections[other_model._meta.verbose_name.title()] = {
                     'items': queryset,
-                    'model': model
+                    'model': ContentType.objects.get_for_model(other_model).id
                 }
 
     for field in model_class._meta.get_fields():
@@ -213,7 +215,7 @@ def update_view(request, model, pk):
             queryset = getattr(master_object, accessor_name).all()
             related_sections[field.related_model._meta.verbose_name.title()] = {
                 'items': queryset,
-                'model': model
+                'model': ContentType.objects.get_for_model(field.related_model).id
             }
 
     context = {
