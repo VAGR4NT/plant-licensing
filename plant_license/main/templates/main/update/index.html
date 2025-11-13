@@ -1,18 +1,25 @@
 {% extends "main/base.html" %}
+{% load static %}
 
-{% block title %} Update {% endblock %} {% block content %}
+{% block title %} Update {% endblock %} 
+
+{% block page_css %}
+    <link rel="stylesheet" href="{% static 'css/update.css' %}" />
+{% endblock %}
+
+{% block content %}
 
 <div class="container">
 
-    <form class-="form-section" method="POST">
+    <form class="form-section" method="POST">
         {% csrf_token %}
-        <h2>Details for: {{ master_object }}</h2>
-       
+        <h2>{{ master_object }}</h2>
+
         <div class="form-controls">
-            <button type="button" id="edit-button">Edit</button>
-            <button type="submit" id="save-button">Save Changes</button>
-            <button type="button" id="cancel-button">Cancel</button>
-        </div> 
+            <button type="button" class="btn" id="edit-button">Edit</button>
+            <button type="submit" class="btn" id="save-button">Save Changes</button>
+            <button type="button" class="btn" id="cancel-button">Cancel</button>
+        </div>
 
         <fieldset id="master-form-fieldset" disabled>
             {% for field in form %}
@@ -20,84 +27,63 @@
                     {{ field.label_tag }}
                     {{ field }}
                     {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
-                    {% for error in field.errors %}<p style="color: red;">{{ error }}</p>{% endfor %}
+                    {% for error in field.errors %}
+                        <p style="color:red;">{{ error }}</p>
+                    {% endfor %}
                 </div>
             {% endfor %}
         </fieldset>
-
     </form>
 
+
     {% for section_name, info in related_sections.items %}
-    <div class="child-section">
-        <h3>{{ section_name }}</h3>
-        
-        {% if info.items %}
-        <table class="child-table">
-            <thead>
-                <tr>
-                    <th>Name / Identifier</th> 
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in info.items %}
-                <tr>
-                    <td>{{ item }}</td> <td>
-                        <div class="child-table-actions">
-				<a href="{% url 'update' ct=info.model pk=item.pk %}">Edit</a> <form method="POST" action={% url 'update' ct=info.model pk=item.pk %}> {% csrf_token %}
-                                <input type="hidden" name="item_to_delete" value="{{ item.pk }}">
-                                <button type="submit" name='delete' value="1">Remove</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-            <p>No {{ section_name }} found for this item.</p>
-        {% endif %}
+        <div class="child-section datatable-container">
+            <h3>{{ section_name }}</h3>
 
+            {% if info.items %}
+                <table class="child-table datatable">
+                    <thead>
+                        <tr>
+                            <th>Actions</th>
+                            <th>Name / Identifier</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in info.items %}
+                            <tr>
+                                <td>
+                                    <div class="child-table-actions">
+                                        <form method="POST" action="{% url 'update' ct=info.model pk=item.pk %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="item_to_delete" value="{{ item.pk }}">
+                                            <button type="submit" class="btn" id="delete_btn" name="delete">Remove</button>
+                                        </form>
+
+                                        <a class="btn" id="edit_btn" href="{% url 'update' ct=info.model pk=item.pk %}">
+                                            Edit
+                                        </a>
+                                    </div>
+                                </td>
+                                <td>{{ item }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No {{ section_name }} found for this item.</p>
+            {% endif %}
+        </div>
     {% endfor %}
-
 </div>
 
-<script>
-    // This waits for the whole page to be loaded before running the script
-    document.addEventListener('DOMContentLoaded', (event) => {
-        
-        // 1. Get references to the elements we need to control
-        const fieldset = document.getElementById('master-form-fieldset');
-        const editButton = document.getElementById('edit-button');
-        const saveButton = document.getElementById('save-button');
-        const cancelButton = document.getElementById('cancel-button');
-
-        // 2. Listen for a click on the "Edit" button
-        editButton.addEventListener('click', () => {
-            // Enable the form fields
-            fieldset.disabled = false;
-            
-            // Toggle the button visibility
-            editButton.style.display = 'none';
-            saveButton.style.display = 'inline-block';
-            cancelButton.style.display = 'inline-block';
-        });
-
-        // 3. Listen for a click on the "Cancel" button
-        cancelButton.addEventListener('click', () => {
-            // Disable the form fields again
-            fieldset.disabled = true;
-
-            // Toggle the button visibility back to the start
-            editButton.style.display = 'inline-block';
-            saveButton.style.display = 'none';
-            cancelButton.style.display = 'none';
-
-            // Optional: You could add logic here to reset form fields 
-            // to their original values if the user made changes
-            // but for now, it just locks the form.
-        });
-    });
-</script>
 
 {% endblock %}
+
+{% block page_js %}
+
+<script src="{% static 'js/update/form_edit.js' %}"></script>
+<script src="{% static 'js/update/delete_popup.js' %}"></script>
+
+{% endblock %}
+
+

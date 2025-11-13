@@ -1,8 +1,16 @@
-
 {% extends "main/base.html" %}
+{% load static %}
 
-{% block title %} Dealer Generate {% endblock %} {% block content %}
+{% block title %} Dealer Generate {% endblock %}
 
-<h1>Generate Nursery Dealer PDFs</h1>
+{% block page_css %}
+    <link rel="stylesheet" href="{% static 'css/dealer_generate.css' %}" />
+{% endblock %}
+
+
+{% block content %}
+
+<h1>Dealer PDFs</h1>
+<a href="{% url 'nursery_generate' %}" id="nursery-btn" class="btn">Generate Nursery PDFs</a>
 
 {% endblock %}
