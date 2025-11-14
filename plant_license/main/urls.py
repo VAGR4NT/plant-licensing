@@ -2,6 +2,7 @@ from django.urls import path
 from django.views.generic import RedirectView
 from django.contrib.auth import views as auth_views
 from . import views
+from .views import download_nursery_pdf
 
 urlpatterns = [
     # Root redirect → /login/
@@ -11,7 +12,7 @@ urlpatterns = [
         "login/",
         auth_views.LoginView.as_view(
             template_name="main/login/index.html",
-            redirect_authenticated_user=True,  # ✅ key addition
+            redirect_authenticated_user=True,
         ),
         name="login",
     ),
@@ -19,12 +20,19 @@ urlpatterns = [
     # Protected routes
     path("direct-access/", views.direct_access_view, name="direct_access"),
     path("view/", views.view_db_view, name="view_db"),
-    path("generate-forms/", views.generate_forms_view, name="generate_forms"),
+    path("generate-forms/", views.nursery_generate, name="generate_forms"),
     path("update/", views.update_view, name="update"),
     path("update/<int:pk>/", views.update_view, name="update_pk"),
     path("success/", views.update_success, name="success"),
-    path('update/<str:model>/<int:pk>/', views.update_view, name='update'),
+    path("update/<int:ct>/<int:pk>/", views.update_view, name="update"),
     path("user-info/", views.user_info_view, name="user_info"),
-    path("specific_view/", views.specific_view, name="specific_view"), 
+    path("specific_view/", views.specific_view, name="specific_view"),
     path("account/", views.account_view, name="account"),
+    path("nursery_generate/", views.nursery_generate, name="nursery_generate"),
+    path("dealer_generate/", views.dealer_generate, name="dealer_generate"),
+    path(
+        "nursery/<int:business_id>/download/",
+        download_nursery_pdf,
+        name="download_nursery_pdf",
+    ),
 ]

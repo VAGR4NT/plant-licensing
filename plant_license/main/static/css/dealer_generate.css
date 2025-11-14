@@ -1,0 +1,13 @@
+h1 {
+  text-align: center;
+}
+
+#nursery-btn {
+  display: block;
+  margin: 1rem auto; /* centers block elements */
+  width: fit-content; /* keeps it button-sized */
+}
+
+.datatable-container {
+  margin: 1rem 0;
+}
