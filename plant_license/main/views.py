@@ -410,7 +410,45 @@ def export_table_as_csv(request):
         headers={'Content-Disposition': 'attachment; filename="data.csv"'},
     )
 
-    # Get all data from your model
+    try:
+        # Get a list of all our tables
+        all_models = apps.get_app_config("main").get_models()
+
+        # Loop through each model and check if it is dependent
+        for model in all_models:
+            queryset = model.objects.all()
+
+            # Get all data from your model
+            # This assumes your model is SampleData. Replace with your actual model.
+            queryset = Businesses.objects.all()
+
+            # Check if there is any data to write
+            if not queryset.exists():
+                response.write("No data found.")
+                return response
+
+            # Get the model's field names
+            # We use _meta.fields to get all field objects
+            # and then get the name for each field.
+            field_names = [field.name for field in Businesses._meta.fields]
+
+            # Create a CSV writer object using the response as the file
+            writer = csv.writer(response)
+
+            # Write the header row
+            writer.writerow(field_names)
+
+            # Iterate over the queryset and write each row to the CSV
+            for obj in queryset:
+                # Create a list of values for the current object
+                row = [getattr(obj, field) for field in field_names]
+                writer.writerow(row)
+
+    except LookupError:
+        context["error"] = "Problem"
+
+
+    """ # Get all data from your model
     # This assumes your model is SampleData. Replace with your actual model.
     queryset = Businesses.objects.all()
 
@@ -434,6 +472,6 @@ def export_table_as_csv(request):
     for obj in queryset:
         # Create a list of values for the current object
         row = [getattr(obj, field) for field in field_names]
-        writer.writerow(row)
+        writer.writerow(row) """
 
     return response
