@@ -1,9 +1,8 @@
-{% extends "main/base.html" %}
+{% extends "main/base.html" %} {% block title %} Direct Access {% endblock %} {%
+block content %}
 
-{% block title %} Direct Access {% endblock %}
+<h1>Direct Access</h1>
 
-{% block content %}
-
-<h1> Direct Access </h1>
+<a href="{% url 'do_shit' %}"><button>Click Me!</button></a>
 
 {% endblock %}
