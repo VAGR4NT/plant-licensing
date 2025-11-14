@@ -1,9 +1,12 @@
-{% extends "main/base.html" %}
+{% extends "main/base.html" %} {% block title %} Direct Access {% endblock %}
+{%block content %}
 
-{% block title %} Direct Access {% endblock %}
+<h1>Direct Access</h1>
 
-{% block content %}
+<div>
+  <a href="{% url 'export_table_csv' %}" class="btn"
+    >Download Business Table as CSV/Excel</a
+  >
 
-<h1> Direct Access </h1>
-
-{% endblock %}
+  {% endblock %}
+</div>

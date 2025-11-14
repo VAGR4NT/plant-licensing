@@ -3,6 +3,7 @@ from django.views.generic import RedirectView
 from django.contrib.auth import views as auth_views
 from . import views
 from .views import download_nursery_pdf
+from .views import export_table_as_csv
 
 urlpatterns = [
     # Root redirect → /login/
@@ -35,4 +36,5 @@ urlpatterns = [
         download_nursery_pdf,
         name="download_nursery_pdf",
     ),
+    path('export_table_csv/', export_table_as_csv, name='export_table_csv'),
 ]

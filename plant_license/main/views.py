@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, Http404
 from django.urls import reverse
 from django import forms
+import csv
 from django.contrib.contenttypes.models import ContentType
 from django.forms import modelform_factory
 from django.db import connection
@@ -398,3 +399,41 @@ def download_nursery_pdf(request, business_id: int):
         f'attachment; filename="nursery_renewal_{business_id}.pdf"'
     )
     return resp
+
+
+def export_table_as_csv(request):
+
+    # Create the HttpResponse object with the appropriate CSV header.
+    # This tells the browser to treat the response as a file to be downloaded.
+    response = HttpResponse(
+        content_type='text/csv',
+        headers={'Content-Disposition': 'attachment; filename="data.csv"'},
+    )
+
+    # Get all data from your model
+    # This assumes your model is SampleData. Replace with your actual model.
+    queryset = Businesses.objects.all()
+
+    # Check if there is any data to write
+    if not queryset.exists():
+        response.write("No data found.")
+        return response
+
+    # Get the model's field names
+    # We use _meta.fields to get all field objects
+    # and then get the name for each field.
+    field_names = [field.name for field in Businesses._meta.fields]
+
+    # Create a CSV writer object using the response as the file
+    writer = csv.writer(response)
+
+    # Write the header row
+    writer.writerow(field_names)
+
+    # Iterate over the queryset and write each row to the CSV
+    for obj in queryset:
+        # Create a list of values for the current object
+        row = [getattr(obj, field) for field in field_names]
+        writer.writerow(row)
+
+    return response
