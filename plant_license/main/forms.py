@@ -18,7 +18,7 @@ class BusinessForm(forms.ModelForm):
 LocationFormSet = inlineformset_factory(
     Businesses,       
     Locations,        
-    fields=(         
+    fields=(        
         'address', 
         'city', 
         'state', 

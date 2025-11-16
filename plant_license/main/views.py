@@ -165,6 +165,8 @@ def view_db_view(request):
 def generate_forms_view(request):
     return render(request, "main/generate-forms/index.html")
 
+def add_business(request):
+    return render(request, "main/add_business/index.html")
 
 def update_view(request, ct, pk):
     """
@@ -245,9 +247,6 @@ def update_view(request, ct, pk):
 
     return render(request, "main/update/index.html", context)
 
-
-def update_success(request):
-    return render(request, "main/update/success.html")
 
 
 def user_info_view(request):
