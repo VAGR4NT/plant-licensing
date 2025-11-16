@@ -25,7 +25,6 @@ urlpatterns = [
     path("update/<int:pk>/", views.update_view, name="update_pk"),
     path("success/", views.update_success, name="success"),
     path("update/<int:ct>/<int:pk>/", views.update_view, name="update"),
-    path("user-info/", views.user_info_view, name="user_info"),
     path("specific_view/", views.specific_view, name="specific_view"),
     path("account/", views.account_view, name="account"),
     path("nursery_generate/", views.nursery_generate, name="nursery_generate"),
