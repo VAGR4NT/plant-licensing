@@ -252,8 +252,11 @@ def account_view(request):
 
 
 def dealer_generate(request):
-    return render(request, "main/dealer_generate/index.html")
 
+    businesses = Businesses.objects.order_by("business_name")
+    return render(
+        request, "main/dealer_generate/index.html", {"businesses": businesses}
+    )
 
 def nursery_generate(request):
     businesses = Businesses.objects.order_by("business_name")
@@ -262,8 +265,8 @@ def nursery_generate(request):
     )
 
 
-TEMPLATE_PATH = Path(settings.BASE_DIR) / "pdfs" / "nursery_renewal_fillable.pdf"
-
+NURSERY_TEMPLATE_PATH = Path(settings.BASE_DIR) / "pdfs" / "nursery_renewal_fillable.pdf"
+DEALER_TEMPLATE_PATH = Path(settings.BASE_DIR) / "pdfs" / "dealer_renewal_fillable.pdf"
 
 def _fill_pdf(template_path: str, field_map: dict) -> bytes:
     reader = PdfReader(template_path)
@@ -301,7 +304,6 @@ def _fill_pdf(template_path: str, field_map: dict) -> bytes:
 
 
 def download_nursery_pdf(request, business_id: int):
-    # Get the business row by business_id (this is your “key”)
     try:
         biz = Businesses.objects.get(pk=business_id)
     except Businesses.DoesNotExist:
@@ -385,9 +387,42 @@ def download_nursery_pdf(request, business_id: int):
         "Check": "",
     }
 
-    filled = _fill_pdf(str(TEMPLATE_PATH), field_map)
+    filled = _fill_pdf(str(NURSERY_TEMPLATE_PATH), field_map)
     resp = HttpResponse(filled, content_type="application/pdf")
     resp["Content-Disposition"] = (
         f'attachment; filename="nursery_renewal_{business_id}.pdf"'
     )
+    return resp
+
+def download_dealer_pdf(request, business_id: int):
+    try:
+        biz = Businesses.objects.get(pk=business_id)
+    except Businesses.DoesNotExist:
+        raise Http404("Business not found")
+
+#    supplier_names = (Suppliers.objects
+#                      .filter(businesssuppliers__business=biz)
+#                      .values_list("supplier_name", flat=True))
+
+    data = {
+        "business_name":      biz.business_name,
+        "mailing_address":    biz.mo_address,
+        "main_office_city":   biz.mo_city,
+        "main_office_state":  biz.mo_state,
+        "main_office_zip":    biz.mo_zip,
+        "main_contact_name":  biz.main_contact_name or "",
+        "main_contact_phone": biz.main_contact_phone or "",
+        "fax":                "",                       # gotta add this to db too
+        "email":              biz.main_contact_email or "",
+        "renewal_year1":      "",                       # current license year
+        "renewal_year2":      "",
+        "current_license_year": "",
+        "email_pref":         True,                     # check models later
+        "usps_pref":          False,
+#        "suppliers":          list(supplier_names),
+    }
+
+    filled_bytes = _fill_pdf(str(DEALER_TEMPLATE_PATH), data)
+    resp = HttpResponse(filled_bytes, content_type="application/pdf")
+    resp["Content-Disposition"] = f'attachment; filename="dealer_renewal_{business_id}.pdf"'
     return resp
