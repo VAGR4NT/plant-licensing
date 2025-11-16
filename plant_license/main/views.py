@@ -24,7 +24,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.generic import NameObject, BooleanObject, DictionaryObject
 
 from .models import Businesses, Locations, Licenses, Suppliers, BusinessSuppliers
-
+from .forms import BusinessForm, LocationFormSet
 
 def home_view(request):
     total_posts = Suppliers.objects.count()
@@ -166,7 +166,32 @@ def generate_forms_view(request):
     return render(request, "main/generate-forms/index.html")
 
 def add_business(request):
-    return render(request, "main/add_business/index.html")
+    if request.method == "POST":
+        form = BusinessForm(request.POST)
+        formset = LocationFormSet(request.POST)
+
+        try:
+            with transaction.atomic():
+                business = form.save()
+
+                formset.instance = business
+                formset.save()
+            
+                return redirect("view/")
+
+        except Exception as e:
+            form.add_error(None, f"{e}")
+
+    else:
+        form = BusinessForm()
+        formset = LocationFormSet()
+
+    context = {
+        'form' : form,
+        'location_formset' : formset,
+    }
+
+    return render(request, "main/add_business/index.html", context)
 
 def update_view(request, ct, pk):
     """

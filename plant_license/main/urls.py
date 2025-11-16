@@ -3,6 +3,8 @@ from django.views.generic import RedirectView
 from django.contrib.auth import views as auth_views
 from . import views
 from .views import download_nursery_pdf
+from django.contrib import admin
+from .autocomplete import SupplierAutocomplete
 
 urlpatterns = [
     # Root redirect → /login/
@@ -17,12 +19,18 @@ urlpatterns = [
         name="login",
     ),
     path("logout/", auth_views.LogoutView.as_view(next_page="login"), name="logout"),
+    path("admin/", admin.site.urls),
     # Protected routes
     path("direct-access/", views.direct_access_view, name="direct_access"),
     path("view/", views.view_db_view, name="view_db"),
     path("generate-forms/", views.nursery_generate, name="generate_forms"),
     path("update/<int:ct>/<int:pk>/", views.update_view, name="update"),
     path("add_business/", views.add_business, name ="add_business"),
+    path(
+        'supplier-autocomplete/',
+        SupplierAutocomplete.as_view(),
+        name='supplier-autocomplete'
+    ),
     path("user-info/", views.user_info_view, name="user_info"),
     path("specific_view/", views.specific_view, name="specific_view"),
     path("account/", views.account_view, name="account"),
