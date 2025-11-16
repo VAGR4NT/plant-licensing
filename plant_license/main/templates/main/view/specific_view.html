@@ -65,7 +65,6 @@
       <div class="column_box">
         <h3>{{ table }}</h3>
 
-        <!-- ✅ Wrapper for checkboxes -->
         <div class="checkbox-wrapper {% if fields|length > 10 %}multi-column{% endif %}">
           {% for field_name in fields %}
           <label>
@@ -93,7 +92,6 @@
     if (!form) return;
 
     form.addEventListener("submit", function () {
-      // Append anchor before submission so page reload jumps to table
       form.action = form.action.split("#")[0] + "#results";
     });
   });
@@ -106,8 +104,8 @@
   {% elif result_count is not None %}
     <p>Found {{ result_count }} matching record(s). Showing {{ rows|length }}.</p>
     {% if rows %}
-    <div class="table-container">
-      <table class="results-table">
+    <div class="datatable-container">
+      <table class="datatable">
         <thead>
           <tr>
             <th>Actions</th>
@@ -120,7 +118,7 @@
           {% for row in rows %}
           <tr>
             <td>
-              <a href="{% url 'update' 'business' row.id %}">Edit</a>
+               <a class="btn" href="{% url 'update' business_model_id row.id %}">Edit</a>
             </td>
             {% for cell in row.data %}
               <td>{{ cell }}</td>

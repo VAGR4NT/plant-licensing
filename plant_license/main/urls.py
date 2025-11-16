@@ -12,7 +12,7 @@ urlpatterns = [
         "login/",
         auth_views.LoginView.as_view(
             template_name="main/login/index.html",
-            redirect_authenticated_user=True,  # ✅ key addition
+            redirect_authenticated_user=True,
         ),
         name="login",
     ),
@@ -20,11 +20,9 @@ urlpatterns = [
     # Protected routes
     path("direct-access/", views.direct_access_view, name="direct_access"),
     path("view/", views.view_db_view, name="view_db"),
-    path("generate-forms/", views.generate_forms_view, name="generate_forms"),
-    path("update/", views.update_view, name="update"),
-    path("update/<int:pk>/", views.update_view, name="update_pk"),
-    path("success/", views.update_success, name="success"),
-    path("update/<str:model>/<int:pk>/", views.update_view, name="update"),
+    path("generate-forms/", views.nursery_generate, name="generate_forms"),
+    path("update/<int:ct>/<int:pk>/", views.update_view, name="update"),
+    path("add_business/", views.add_business, name ="add_business"),
     path("user-info/", views.user_info_view, name="user_info"),
     path("specific_view/", views.specific_view, name="specific_view"),
     path("account/", views.account_view, name="account"),

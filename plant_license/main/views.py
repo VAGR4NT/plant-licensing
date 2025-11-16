@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, Http404
 from django.urls import reverse
 from django import forms
+from django.contrib.contenttypes.models import ContentType
 from django.forms import modelform_factory
 from django.db import connection
 from .query_builder import (
@@ -62,6 +63,7 @@ def specific_view(request):
         "operators": ["exact", "iexact", "icontains", "gt", "gte", "lt", "lte"],
         "headers": [],
         "rows": [],
+        "business_model_id": ContentType.objects.get_for_model(Businesses).id,
         "error_message": None,
         "result_count": None,
         "request_get": request.GET,
@@ -163,26 +165,33 @@ def view_db_view(request):
 def generate_forms_view(request):
     return render(request, "main/generate-forms/index.html")
 
+def add_business(request):
+    return render(request, "main/add_business/index.html")
 
-def update_view(request, model, pk):
+def update_view(request, ct, pk):
     """
     A dynamic view to display and update any model instance ("master_object")
     and list its related "child" objects.
     """
-
-    model_class = MODEL_MAP[model]
+    model_class = ContentType.objects.get(id=ct).model_class()
 
     master_object = get_object_or_404(model_class, pk=pk)
 
-    local_field_names = [field.name for field in model_class._meta.fields]
-    DynamicModelForm = modelform_factory(model_class, fields=local_field_names)
+    local_field_names = [field.name for field in model_class._meta.fields if not field.is_relation]
+    DynamicModelForm = modelform_factory(model_class, fields=local_field_names) 
 
-    if request.method == "POST":
+
+    if request.method == 'POST':
+        if 'delete' in request.POST:
+            master_object.delete()
+            return redirect(request.META.get('HTTP_REFERER', '/'))
+        
         form = DynamicModelForm(request.POST, instance=master_object)
 
         if form.is_valid():
             form.save()
             return redirect(request.path)
+ 
     else:
         form = DynamicModelForm(instance=master_object)
 
@@ -216,8 +225,8 @@ def update_view(request, model, pk):
                 queryset = getattr(master_object, accessor_name).all()
 
                 related_sections[other_model._meta.verbose_name.title()] = {
-                    "items": queryset,
-                    "model": model,
+                    'items': queryset,
+                    'model': ContentType.objects.get_for_model(other_model).id
                 }
 
     for field in model_class._meta.get_fields():
@@ -225,8 +234,8 @@ def update_view(request, model, pk):
             accessor_name = field.name
             queryset = getattr(master_object, accessor_name).all()
             related_sections[field.related_model._meta.verbose_name.title()] = {
-                "items": queryset,
-                "model": model,
+                'items': queryset,
+                'model': ContentType.objects.get_for_model(field.related_model).id
             }
 
     context = {
@@ -238,9 +247,6 @@ def update_view(request, model, pk):
 
     return render(request, "main/update/index.html", context)
 
-
-def update_success(request):
-    return render(request, "main/update/success.html")
 
 
 def user_info_view(request):
