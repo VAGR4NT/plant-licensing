@@ -24,6 +24,8 @@ from django.utils import timezone
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import NameObject, BooleanObject, DictionaryObject
 
+import django.core.mail
+
 from .models import Businesses, Locations, Licenses, Suppliers, BusinessSuppliers
 
 
@@ -400,19 +402,30 @@ def download_nursery_pdf(request, business_id: int):
     )
     return resp
 
+""" def generate_tables(request):
+    all_models = apps.get_models()
+    return render(
+        request, "main/direct-access/index.html", {"all_models": all_models}
+    ) """
 
-def export_table_as_csv(request):
+""" 
+def export_table_as_csv(request, table_id: int):
 
+    all_models = apps.get_models()
+    for m in all_models:
+        
+    
+    this_table = all_models[table_id]
+    
     # Create the HttpResponse object with the appropriate CSV header.
     # This tells the browser to treat the response as a file to be downloaded.
     response = HttpResponse(
         content_type='text/csv',
-        headers={'Content-Disposition': 'attachment; filename="data.csv"'},
+        headers={'Content-Disposition': 'attachment; filename="table.csv"'},
     )
 
     # Get all data from your model
-    # This assumes your model is SampleData. Replace with your actual model.
-    queryset = Businesses.objects.all()
+    queryset = this_table.objects.all()
 
     # Check if there is any data to write
     if not queryset.exists():
@@ -422,7 +435,7 @@ def export_table_as_csv(request):
     # Get the model's field names
     # We use _meta.fields to get all field objects
     # and then get the name for each field.
-    field_names = [field.name for field in Businesses._meta.fields]
+    field_names = [field.name for field in this_table._meta.fields]
 
     # Create a CSV writer object using the response as the file
     writer = csv.writer(response)
@@ -437,3 +450,18 @@ def export_table_as_csv(request):
         writer.writerow(row)
 
     return response
+
+ """
+
+
+def mail_to_user(request):
+    subject = "hello"
+    from_email = "tho241@uky.edu"
+    to = "tho241@uky.edu"
+    text_content = "This is an important message."
+    html_content = "<p>This is an <strong>important</strong> message.</p>"
+    msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
+    msg.attach_alternative(html_content, "text/html")
+    msg.send()
+
+    return

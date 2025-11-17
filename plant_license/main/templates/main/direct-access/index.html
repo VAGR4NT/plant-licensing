@@ -4,7 +4,9 @@
 <h1>Direct Access</h1>
 
 <div>
-  <a href="{% url 'export_table_csv' %}" class="btn"
+  <a href="{% url 'mail_to_user' %}" class="btn">email</a>
+
+  <a href="{% url 'export_table_csv' 0 %}" class="btn"
     >Download Businesses Table as CSV/Excel</a
   >
 
