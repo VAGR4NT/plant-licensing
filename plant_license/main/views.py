@@ -24,7 +24,8 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.generic import NameObject, BooleanObject, DictionaryObject
 
 from .models import Businesses, Locations, Licenses, Suppliers, BusinessSuppliers
-from .forms import BusinessForm, LocationFormSet
+from .forms import BusinessForm, LocationFormSet, LocationLicenseFormSet, LocationForm
+from django.db import transaction
 
 def home_view(request):
     total_posts = Suppliers.objects.count()
@@ -175,9 +176,16 @@ def add_business(request):
                 business = form.save()
 
                 formset.instance = business
-                formset.save()
-            
-                return redirect("view/")
+                locations = formset.save()
+                
+                if locations:
+                    location_pks = [loc.pk for loc in locations]
+
+                    request.session['pending_location_pks'] = location_pks
+                    return redirect('complete_licenses', location_pks[0])
+                
+                else:
+                    return redirect("view_db/")
 
         except Exception as e:
             form.add_error(None, f"{e}")
@@ -192,6 +200,49 @@ def add_business(request):
     }
 
     return render(request, "main/add_business/index.html", context)
+
+def complete_licenses(request, pk):
+    location = get_object_or_404(Locations, pk=pk)
+    
+    pending_pks = request.session.get('pending_location_pks', [])
+    next_pk = None
+    
+    try:
+        current_index = pending_pks.index(pk)
+        
+        if current_index + 1 < len(pending_pks):
+            next_pk = pending_pks[current_index + 1]
+    except ValueError:
+        pass
+
+    if request.method == "POST":
+        form = LocationForm(request.POST, instance=location)
+        formset = LocationLicenseFormSet(request.POST, instance=location)
+        
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            
+            if 'save_and_next' in request.POST and next_pk:
+                return redirect('complete_licenses', pk=next_pk)
+            
+            if 'pending_location_pks' in request.session:
+                del request.session['pending_location_pks']
+                
+            return redirect('view_db') 
+            
+    else:
+        form = LocationForm(instance=location)
+        formset = LocationLicenseFormSet(instance=location)
+
+    context = {
+        'location_form': form,
+        'license_formset': formset,
+        'location': location,
+        'next_location_pk': next_pk  
+    }
+
+    return render(request, 'main/add_business/complete_licenses.html', context)
 
 def update_view(request, ct, pk):
     """

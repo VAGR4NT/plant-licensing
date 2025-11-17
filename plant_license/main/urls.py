@@ -26,6 +26,7 @@ urlpatterns = [
     path("generate-forms/", views.nursery_generate, name="generate_forms"),
     path("update/<int:ct>/<int:pk>/", views.update_view, name="update"),
     path("add_business/", views.add_business, name ="add_business"),
+    path("complete_licenses/<int:pk>/", views.complete_licenses, name='complete_licenses'),
     path(
         'supplier-autocomplete/',
         SupplierAutocomplete.as_view(),
