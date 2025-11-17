@@ -36,5 +36,5 @@ urlpatterns = [
         download_nursery_pdf,
         name="download_nursery_pdf",
     ),
-    path('export_table_csv/<int:table_id>/download/', export_table_as_csv, name='export_table_csv'),
+    path('export_table_csv/', export_table_as_csv, name='export_table_csv'),
 ]

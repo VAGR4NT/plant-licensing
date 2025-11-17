@@ -1,25 +1,29 @@
-{% extends "main/base.html" %} {% load static %} {% block title %} Nursery
-Generate {% endblock %} {% block page_css %}
-<link rel="stylesheet" href="{% static 'css/nursery_generate.css' %}" />
-{% endblock %} {% block content %}
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %} Nursery Generate {% endblock %}
+
+{% block page_css %}
+    <link rel="stylesheet" href="{% static 'css/nursery_generate.css' %}" />
+{% endblock %}
+
+{% block content %}
 
 <h1>Nursery PDFs</h1>
-<a href="{% url 'dealer_generate' %}" id="dealer-btn" class="btn"
-  >Generate Dealer PDFs</a
->
+<a href="{% url 'dealer_generate' %}" id="dealer-btn" class="btn">Generate Dealer PDFs</a>
 
 <div class="datatable-container">
-  <table class="datatable">
-    <thead>
-      <tr>
-        <th>PDF</th>
-        <th>Business</th>
-        <th>City</th>
-        <th>Acreage</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for b in businesses %}
+<table class="datatable">
+  <thead>
+    <tr>
+      <th>PDF</th>
+      <th>Business</th>
+      <th>City</th>
+      <th>Acreage</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for b in businesses %}
       <tr>
         <td>
           <a class="btn" href="{% url 'download_nursery_pdf' b.business_id %}">
@@ -30,13 +34,10 @@ Generate {% endblock %} {% block page_css %}
         <td>{{ b.mo_city }}</td>
         <td>{{ b.acreage }}</td>
       </tr>
-      {% empty %}
-      <tr>
-        <td colspan="4">No businesses found.</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    {% empty %}
+      <tr><td colspan="4">No businesses found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
 
-  {% endblock %}
-</div>
+{% endblock %}

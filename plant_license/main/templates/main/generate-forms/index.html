@@ -1,11 +1,13 @@
-{% extends "main/base.html" %} {% block title %} Generate Forms {% endblock %}
+{% extends "main/base.html" %}
+
+{% block title %} Generate Forms {% endblock %}
+
 {% block content %}
 
-<h1>Generate Forms</h1>
+<h1> Generate Forms </h1>
 
-<div>
-  <a href="{% url 'dealer_generate' %}" class="btn">Generate Dealer PDFs</a>
-  <a href="{% url 'nursery_generate' %}" class="btn">Generate Nursery PDFs</a>
+<div >
+<a href="{% url 'dealer_generate' %}" class="btn">Generate Dealer PDFs</a>
+<a href="{% url 'nursery_generate' %}" class="btn">Generate Nursery PDFs</a>
 
-  {% endblock %}
-</div>
+{% endblock %}
