@@ -25,29 +25,18 @@ urlpatterns = [
     path("user-info/", views.user_info_view, name="user_info"),
     path("specific_view/", views.specific_view, name="specific_view"),
     path("account/", views.account_view, name="account"),
-    # Nursery + Dealer listing pages
+    # nursery and dealer pdf/eml generation
     path("nursery_generate/", views.nursery_generate, name="nursery_generate"),
     path("dealer_generate/", views.dealer_generate, name="dealer_generate"),
-    # Nursery PDF actions
     path(
-        "nursery/<int:business_id>/pdf/",
-        views.download_nursery_pdf,
-        name="download_nursery_pdf",
+        "<str:kind>/<int:business_id>/preview/", views.preview_pdf, name="preview_pdf"
     ),
     path(
-        "nursery/<int:business_id>/preview/",
-        views.preview_nursery_pdf,
-        name="nursery_preview",
+        "<str:kind>/<int:business_id>/download/",
+        views.download_pdf,
+        name="download_pdf",
     ),
     path(
-        "nursery/<int:business_id>/eml/",
-        views.download_nursery_eml,
-        name="download_nursery_eml",
-    ),
-    # Dealer PDF
-    path(
-        "dealer/<int:business_id>/pdf/",
-        views.download_dealer_pdf,
-        name="download_dealer_pdf",
+        "<str:kind>/<int:business_id>/email/", views.download_eml, name="download_eml"
     ),
 ]

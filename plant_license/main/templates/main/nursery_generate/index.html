@@ -1,112 +1,74 @@
 {% extends "main/base.html" %}
 {% load static %}
 
-{% block title %} Nursery Generate {% endblock %}
+{% block title %} Nursery License Renewal {% endblock %}
 
 {% block page_css %}
-<link rel="stylesheet" href="{% static 'css/nursery_generate.css' %}">
-<style>
-    .business-card {
-        background: var(--color-warm-neutral-20);
-        border: 1px solid var(--color-cool-neutral);
-        border-radius: 1rem;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    .business-header {
-        font-size: 1.3rem;
-        font-weight: bold;
-        color: var(--color-midnight);
-        margin-bottom: 1rem;
-    }
-    .actions {
-        display: flex;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-        flex-wrap: wrap;
-    }
-    .preview-container {
-        display: none;
-        margin-top: 1rem;
-        position: relative;
-        min-height: 200px;
-    }
-    .preview-frame {
-        width: 100%;
-        height: 800px;
-        border: 1px solid var(--color-cool-neutral);
-        border-radius: 8px;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    .preview-frame.loaded {
-        opacity: 1;
-    }
-    .loading-indicator {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center;
-        color: var(--color-midnight);
-        z-index: 10;
-    }
-    .loading-spinner {
-        border: 3px solid #f3f3f3;
-        border-top: 3px solid var(--color-midnight);
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 1rem;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    .preview-status {
-        margin-top: 0.5rem;
-        padding: 0.5rem;
-        border-radius: 4px;
-        text-align: center;
-        font-size: 0.9rem;
-    }
-    .preview-status.error {
-        background-color: #ffe6e6;
-        color: #d00;
-        border: 1px solid #ffcccc;
-    }
-    .preview-status.info {
-        background-color: #e6f3ff;
-        color: #0066cc;
-        border: 1px solid #cce5ff;
-    }
-</style>
+  <link rel="stylesheet" href="{% static 'css/nursery_generate.css' %}">
 {% endblock %}
 
 {% block content %}
 
-<h1>Nursery PDFs</h1>
-<a href="{% url 'dealer_generate' %}" id="dealer-btn" class="btn">Generate Dealer PDFs</a>
+<h1>Nursery License Renewal</h1>
+<a href="{% url 'dealer_generate' %}" id="dealer-btn" class="btn">Generate Dealer Licenses</a>
+<hr>
+
+<div class="form-container">
+  <h2>Nursery Email Template</h2>
+
+  <form class="form-section" method="POST">
+      {% csrf_token %}
+
+      <div class="form-field">
+        <label for="subject">Subject</label>
+        <input
+            id="subject"
+            type="text"
+            name="subject"
+            value="{{ template.subject }}"
+            placeholder="Email Subject"
+        >
+      </div>
+
+      <div class="form-field">
+        <label for="body">Email Body</label>
+        <textarea id="body" name="body">{{ template.body }}</textarea>
+      </div>
+
+      <div class="form-controls">
+          <button type="submit" class="btn primary" id="save-button">
+            Save Email Changes
+          </button>
+      </div>
+  </form>
+</div>
+
+<div class="renewal-section-wrapper">
+  <h2 class="renewal-section-title">License Renewals</h2>
+</div>
 
 {% for b in businesses %}
-
 <div class="business-card">
 
     <div class="business-header">
-        {{ b.business_name }} — <span style="font-weight: normal;">{{ b.mo_city }}</span>
+        {{ b.business_name }} — Renewal Email:
+        <span style="font-weight: normal;">{{ b.wants_email_renewal }}</span>
     </div>
 
     <div class="actions">
 
-        <a class="btn secondary" href="{% url 'download_nursery_eml' b.business_id %}">
+        <!-- Unified Email Download -->
+        <a class="btn secondary"
+           href="{% url 'download_eml' 'nursery' b.business_id %}">
             Download Email (.eml)
         </a>
+
+        <!-- Unified PDF Preview -->
         <button 
             class="btn preview-btn"
             onclick="togglePreview(this)"
             data-biz="{{ b.business_id }}"
+            data-preview-url="{% url 'preview_pdf' 'nursery' b.business_id %}"
         >
             Show PDF
         </button>
@@ -114,6 +76,7 @@
     </div>
 
     <div id="preview-{{ b.business_id }}" class="preview-container">
+
         <!-- Loading indicator -->
         <div class="loading-indicator" id="loading-{{ b.business_id }}">
             <div class="loading-spinner"></div>
@@ -127,7 +90,7 @@
         <iframe
             id="iframe-{{ b.business_id }}"
             class="preview-frame"
-            data-url="{% url 'nursery_preview' b.business_id %}"
+            data-preview-url="{% url 'preview_pdf' 'nursery' b.business_id %}"
             src="about:blank"
             onload="onIframeLoad(this)"
             onerror="onIframeError(this)"
@@ -135,108 +98,12 @@
     </div>
 
 </div>
-
 {% empty %}
 <p>No businesses found.</p>
 {% endfor %}
 
-<script>
-function togglePreview(btn) {
-    const businessId = btn.dataset.biz;
-    const container = document.getElementById("preview-" + businessId);
-    const iframe = document.getElementById("iframe-" + businessId);
-    const loading = document.getElementById("loading-" + businessId);
-    const status = document.getElementById("status-" + businessId);
-    const previewBtn = btn;
+{% endblock %}
 
-    // Toggle visibility
-    const opening = container.style.display !== "block";
-    container.style.display = opening ? "block" : "none";
-
-    // Update button text
-    previewBtn.textContent = opening ? "Hide PDF" : "Show PDF";
-
-    // Reset states when opening
-    if (opening) {
-        iframe.classList.remove('loaded');
-        status.style.display = 'none';
-        loading.style.display = 'block';
-        
-        // Lazy load once
-        if (iframe.src === "about:blank") {
-            iframe.src = iframe.dataset.url;
-        } else {
-            // If already loaded, just show the loading indicator briefly
-            setTimeout(() => {
-                loading.style.display = 'none';
-                iframe.classList.add('loaded');
-            }, 500);
-        }
-    }
-}
-
-function onIframeLoad(iframe) {
-    const businessId = iframe.id.replace('iframe-', '');
-    const loading = document.getElementById("loading-" + businessId);
-    const status = document.getElementById("status-" + businessId);
-    
-    
-    // Hide loading indicator with a slight delay for smooth transition
-    setTimeout(() => {
-        loading.style.display = 'none';
-        iframe.classList.add('loaded');
-    }, 500);
-}
-
-function onIframeError(iframe) {
-    const businessId = iframe.id.replace('iframe-', '');
-    const loading = document.getElementById("loading-" + businessId);
-    const status = document.getElementById("status-" + businessId);
-    
-    console.error("Failed to load PDF preview for business:", businessId);
-    
-    loading.style.display = 'none';
-    status.textContent = "Failed to load PDF preview. Please try downloading the PDF instead.";
-    status.className = "preview-status error";
-    status.style.display = 'block';
-}
-
-// Optional: Add a timeout for very slow loads
-function setupPreviewTimeout(iframe, timeoutMs = 10000) {
-    const businessId = iframe.id.replace('iframe-', '');
-    
-    return setTimeout(() => {
-        const iframeCurrent = document.getElementById("iframe-" + businessId);
-        const loading = document.getElementById("loading-" + businessId);
-        const status = document.getElementById("status-" + businessId);
-        
-        // Only show timeout error if still loading and not already loaded/errored
-        if (loading.style.display !== 'none' && !iframeCurrent.classList.contains('loaded')) {
-            console.warn("PDF preview timeout for business:", businessId);
-            loading.style.display = 'none';
-            status.textContent = "Preview loading is taking longer than expected. The PDF might be large or there might be connection issues.";
-            status.className = "preview-status info";
-            status.style.display = 'block';
-        }
-    }, timeoutMs);
-}
-
-// Store edits from pdf.js for each business ID
-const editedPdfFields = {}; // { businessId: { fieldName: value } }
-
-window.addEventListener("message", (event) => {
-    if (event.data?.type === "pdf_form_update") {
-        // Extract business ID from URL used in the viewer
-        const pdfUrl = event.data.pdfUrl;
-        const match = pdfUrl.match(/\/(\d+)\/preview\/?/);
-
-        if (match) {
-            const businessId = match[1];
-            editedPdfFields[businessId] = event.data.payload;
-            console.log("Updated form values for business", businessId, editedPdfFields[businessId]);
-        }
-    }
-});
-
-</script>
+{% block page_js %}
+  <script src="{% static 'js/generate-forms/pdf-preview.js' %}"></script>
 {% endblock %}

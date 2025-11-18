@@ -14,6 +14,9 @@ from .query_builder import (
 import json
 from django.apps import apps
 from django.db.models import ForeignKey, OneToOneField, ManyToManyField
+from django.db.models import F
+from .models import EmailTemplate
+from django.contrib import messages
 
 from io import BytesIO
 from pathlib import Path
@@ -263,27 +266,19 @@ def account_view(request):
     return render(request, "main/account/index.html")
 
 
+# ============================================================
+# PDF TEMPLATE PATHS
+# ============================================================
+
 NURSERY_TEMPLATE_PATH = (
     Path(settings.BASE_DIR) / "pdfs" / "nursery_renewal_fillable.pdf"
 )
 DEALER_TEMPLATE_PATH = Path(settings.BASE_DIR) / "pdfs" / "dealer_renewal_fillable.pdf"
 
 
-def dealer_generate(request):
-    businesses = Businesses.objects.order_by("business_name")
-    return render(
-        request, "main/dealer_generate/index.html", {"businesses": businesses}
-    )
-
-
-def nursery_generate(request):
-    """Page that lists all businesses for nursery PDF generation."""
-    businesses = Businesses.objects.order_by("business_name")
-    return render(
-        request,
-        "main/nursery_generate/index.html",
-        {"businesses": businesses},
-    )
+# ============================================================
+# SHARED PDF FILL FUNCTION
+# ============================================================
 
 
 def _fill_pdf(template_path: str, field_map: dict) -> bytes:
@@ -304,10 +299,10 @@ def _fill_pdf(template_path: str, field_map: dict) -> bytes:
     for p in reader.pages:
         writer.add_page(p)
 
-    # Copy AcroForm before setting values
+    # Copy AcroForm
     writer._root_object.update({NameObject("/AcroForm"): acroform})
 
-    # Update fields (assuming on page 0)
+    # Apply field values
     writer.update_page_form_field_values(writer.pages[0], field_map)
 
     # Ensure appearance streams are rendered
@@ -320,8 +315,12 @@ def _fill_pdf(template_path: str, field_map: dict) -> bytes:
     return out.getvalue()
 
 
+# ============================================================
+# NURSERY FIELD HELPERS
+# ============================================================
+
+
 def _compute_amount_due(acreage: float) -> tuple[str, float]:
-    """Return (formatted_str, numeric_amount)."""
     amount = 40.00 + 1.50 * acreage
     return f"${amount:,.2f}", amount
 
@@ -340,7 +339,7 @@ def _extract_location_lines(biz: Businesses, max_lines: int = 4):
             if len(lines) == max_lines:
                 break
     else:
-        # Fallback: use location city/county/zip
+        # Fallback: city/county/zip
         qs = (
             Locations.objects.filter(business=biz)
             .order_by("location_id")
@@ -363,7 +362,6 @@ def _extract_location_lines(biz: Businesses, max_lines: int = 4):
 
 
 def _nursery_fieldmap(biz: Businesses):
-    """Build field_map for nursery renewal PDFs."""
     acreage = float(biz.acreage or 0)
     amount_due_str, _ = _compute_amount_due(acreage)
     location_lines, first_loc = _extract_location_lines(biz)
@@ -403,8 +401,12 @@ def _nursery_fieldmap(biz: Businesses):
     }
 
 
+# ============================================================
+# DEALER FIELDMAP
+# ============================================================
+
+
 def _dealer_fieldmap(biz: Businesses):
-    """Build field_map for dealer renewal PDFs."""
     return {
         "business_name": biz.business_name,
         "mailing_address": biz.mo_address,
@@ -423,8 +425,14 @@ def _dealer_fieldmap(biz: Businesses):
     }
 
 
-def _build_eml(to_addr: str, subject: str, pdf_bytes: bytes, filename: str) -> str:
-    """Return raw .eml formatted email with PDF attachment."""
+# ============================================================
+# EML BUILDER
+# ============================================================
+
+
+def _build_eml(
+    to_addr: str, subject: str, body: str, pdf_bytes: bytes, filename: str
+) -> str:
     boundary = uuid.uuid4().hex
     pdf_b64 = base64.b64encode(pdf_bytes).decode("ascii")
 
@@ -439,7 +447,7 @@ Content-Type: multipart/mixed; boundary="{boundary}"
 --{boundary}
 Content-Type: text/plain; charset="utf-8"
 
-Attached is the file "{filename}".
+{body}
 
 --{boundary}
 Content-Type: application/pdf
@@ -452,16 +460,57 @@ Content-Transfer-Encoding: base64
 """
 
 
-# ==========================================
-#    REFACTORED PDF/EML VIEW FUNCTIONS
-# ==========================================
+LICENSE_TYPES = {
+    "nursery": {
+        "template_path": NURSERY_TEMPLATE_PATH,
+        "template_defaults": {
+            "subject": "Nursery Renewal PDF for {business_name}",
+            "body": 'Attached is the file "{filename}".',
+        },
+        "fieldmap": _nursery_fieldmap,
+    },
+    "dealer": {
+        "template_path": DEALER_TEMPLATE_PATH,
+        "template_defaults": {
+            "subject": "Dealer Renewal PDF for {business_name}",
+            "body": 'Attached is the file "{filename}".',
+        },
+        "fieldmap": _dealer_fieldmap,
+    },
+}
 
 
-def preview_nursery_pdf(request, business_id: int):
+def _get_license_config(kind: str):
+    try:
+        return LICENSE_TYPES[kind]
+    except KeyError:
+        raise Http404(f"Unknown license type: {kind}")
+
+
+def _load_email_template(kind: str):
+    cfg = _get_license_config(kind)
+    return EmailTemplate.objects.get_or_create(
+        name=kind,
+        defaults=cfg["template_defaults"],
+    )
+
+
+# ============================================================
+# SHARED PDF/EML GENERATORS
+# ============================================================
+
+
+def generate_pdf(kind: str, biz: Businesses):
+    cfg = _get_license_config(kind)
+    field_map = cfg["fieldmap"](biz)
+    pdf_bytes = _fill_pdf(str(cfg["template_path"]), field_map)
+    filename = f"{kind} renewal - {biz.business_name}.pdf"
+    return pdf_bytes, filename
+
+
+def preview_pdf(request, kind: str, business_id: int):
     biz = get_object_or_404(Businesses, pk=business_id)
-    field_map = _nursery_fieldmap(biz)
-    pdf_bytes = _fill_pdf(str(NURSERY_TEMPLATE_PATH), field_map)
-    filename = f"nursery renewal - {biz.business_name}.pdf"
+    pdf_bytes, filename = generate_pdf(kind, biz)
 
     resp = HttpResponse(pdf_bytes, content_type="application/pdf")
     resp["Content-Disposition"] = f'inline; filename="{filename}"'
@@ -469,43 +518,72 @@ def preview_nursery_pdf(request, business_id: int):
     return resp
 
 
-def download_nursery_pdf(request, business_id: int):
+def download_pdf(request, kind: str, business_id: int):
     biz = get_object_or_404(Businesses, pk=business_id)
-    field_map = _nursery_fieldmap(biz)
-
-    pdf_bytes = _fill_pdf(str(NURSERY_TEMPLATE_PATH), field_map)
-    filename = f"nursery renewal - {biz.business_name}.pdf"
+    pdf_bytes, filename = generate_pdf(kind, biz)
 
     resp = HttpResponse(pdf_bytes, content_type="application/pdf")
     resp["Content-Disposition"] = f'attachment; filename="{filename}"'
     return resp
 
 
-def download_nursery_eml(request, business_id: int):
+def download_eml(request, kind: str, business_id: int):
     biz = get_object_or_404(Businesses, pk=business_id)
 
-    # Build PDF first
-    field_map = _nursery_fieldmap(biz)
-    pdf_bytes = _fill_pdf(str(NURSERY_TEMPLATE_PATH), field_map)
+    tmpl, _ = _load_email_template(kind)
+    pdf_bytes, filename = generate_pdf(kind, biz)
 
-    filename = f"nursery renewal - {biz.business_name}.pdf"
-    subject = f"Nursery Renewal PDF for {biz.business_name}"
-    to_addr = biz.main_contact_email or ""
+    subject = tmpl.subject.format(business_name=biz.business_name)
+    body = tmpl.body.format(
+        business_name=biz.business_name,
+        filename=filename,
+    )
 
-    eml_body = _build_eml(to_addr, subject, pdf_bytes, filename)
+    eml_body = _build_eml(
+        to_addr=biz.main_contact_email or "",
+        subject=subject,
+        body=body,
+        pdf_bytes=pdf_bytes,
+        filename=filename,
+    )
 
     resp = HttpResponse(eml_body, content_type="message/rfc822")
     resp["Content-Disposition"] = f'attachment; filename="{filename}.eml"'
     return resp
 
 
-def download_dealer_pdf(request, business_id: int):
-    biz = get_object_or_404(Businesses, pk=business_id)
-    field_map = _dealer_fieldmap(biz)
+# ============================================================
+# SHARED GENERATE PAGES (nursery & dealer)
+# ============================================================
 
-    pdf_bytes = _fill_pdf(str(DEALER_TEMPLATE_PATH), field_map)
-    filename = f"dealer_renewal_{business_id}.pdf"
 
-    resp = HttpResponse(pdf_bytes, content_type="application/pdf")
-    resp["Content-Disposition"] = f'attachment; filename="{filename}"'
-    return resp
+def generate_page(request, kind: str, template_name: str):
+    tmpl, _ = _load_email_template(kind)
+
+    if request.method == "POST":
+        tmpl.subject = request.POST.get("subject", "")
+        tmpl.body = request.POST.get("body", "")
+        tmpl.save()
+        messages.success(request, "Email template updated.")
+
+    businesses = Businesses.objects.order_by(
+        F("wants_email_renewal").desc(nulls_last=True),
+        "business_name",
+    )
+
+    return render(
+        request,
+        template_name,
+        {
+            "businesses": businesses,
+            "template": tmpl,
+        },
+    )
+
+
+def nursery_generate(request):
+    return generate_page(request, "nursery", "main/nursery_generate/index.html")
+
+
+def dealer_generate(request):
+    return generate_page(request, "dealer", "main/dealer_generate/index.html")

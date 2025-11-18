@@ -8,34 +8,44 @@
 from django.db import models
 
 
+# for generating .eml files
+class EmailTemplate(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    subject = models.CharField(max_length=300)
+    body = models.TextField()
+
+    def __str__(self):
+        return self.name
+
+
 class AuthGroup(models.Model):
     name = models.CharField(unique=True, max_length=150)
 
     class Meta:
         managed = False
-        db_table = 'auth_group'
+        db_table = "auth_group"
 
 
 class AuthGroupPermissions(models.Model):
     id = models.BigAutoField(primary_key=True)
     group = models.ForeignKey(AuthGroup, models.DO_NOTHING)
-    permission = models.ForeignKey('AuthPermission', models.DO_NOTHING)
+    permission = models.ForeignKey("AuthPermission", models.DO_NOTHING)
 
     class Meta:
         managed = False
-        db_table = 'auth_group_permissions'
-        unique_together = (('group', 'permission'),)
+        db_table = "auth_group_permissions"
+        unique_together = (("group", "permission"),)
 
 
 class AuthPermission(models.Model):
     name = models.CharField(max_length=255)
-    content_type = models.ForeignKey('DjangoContentType', models.DO_NOTHING)
+    content_type = models.ForeignKey("DjangoContentType", models.DO_NOTHING)
     codename = models.CharField(max_length=100)
 
     class Meta:
         managed = False
-        db_table = 'auth_permission'
-        unique_together = (('content_type', 'codename'),)
+        db_table = "auth_permission"
+        unique_together = (("content_type", "codename"),)
 
 
 class AuthUser(models.Model):
@@ -52,7 +62,7 @@ class AuthUser(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'auth_user'
+        db_table = "auth_user"
 
 
 class AuthUserGroups(models.Model):
@@ -62,8 +72,8 @@ class AuthUserGroups(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'auth_user_groups'
-        unique_together = (('user', 'group'),)
+        db_table = "auth_user_groups"
+        unique_together = (("user", "group"),)
 
 
 class AuthUserUserPermissions(models.Model):
@@ -73,67 +83,77 @@ class AuthUserUserPermissions(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'auth_user_user_permissions'
-        unique_together = (('user', 'permission'),)
+        db_table = "auth_user_user_permissions"
+        unique_together = (("user", "permission"),)
 
 
 class BusinessPlantTypes(models.Model):
-    pk = models.CompositePrimaryKey('business_id', 'plant_type_id')
-    business = models.ForeignKey('Businesses', models.DO_NOTHING)
-    plant_type = models.ForeignKey('PlantTypes', models.DO_NOTHING)
+    pk = models.CompositePrimaryKey("business_id", "plant_type_id")
+    business = models.ForeignKey("Businesses", models.DO_NOTHING)
+    plant_type = models.ForeignKey("PlantTypes", models.DO_NOTHING)
     is_through_table = True
+
     class Meta:
         managed = False
-        db_table = 'business_plant_types'
+        db_table = "business_plant_types"
 
 
 class BusinessSellingSeasons(models.Model):
-    pk = models.CompositePrimaryKey('business_id', 'season_id')
-    business = models.ForeignKey('Businesses', models.DO_NOTHING)
-    season = models.ForeignKey('SellingSeasons', models.DO_NOTHING)
+    pk = models.CompositePrimaryKey("business_id", "season_id")
+    business = models.ForeignKey("Businesses", models.DO_NOTHING)
+    season = models.ForeignKey("SellingSeasons", models.DO_NOTHING)
     is_through_table = True
+
     class Meta:
         managed = False
-        db_table = 'business_selling_seasons'
+        db_table = "business_selling_seasons"
 
 
 class BusinessShippingRegions(models.Model):
-    pk = models.CompositePrimaryKey('business_id', 'region_id')
-    business = models.ForeignKey('Businesses', models.DO_NOTHING)
-    region = models.ForeignKey('ShippingRegions', models.DO_NOTHING)
+    pk = models.CompositePrimaryKey("business_id", "region_id")
+    business = models.ForeignKey("Businesses", models.DO_NOTHING)
+    region = models.ForeignKey("ShippingRegions", models.DO_NOTHING)
     is_through_table = True
+
     class Meta:
         managed = False
-        db_table = 'business_shipping_regions'
+        db_table = "business_shipping_regions"
 
 
 class BusinessSuppliers(models.Model):
-    pk = models.CompositePrimaryKey('business_id', 'supplier_id')
-    business = models.ForeignKey('Businesses', models.DO_NOTHING, related_name='supplier_links')
-    supplier = models.ForeignKey('Suppliers', models.DO_NOTHING, related_name='business_links')
+    pk = models.CompositePrimaryKey("business_id", "supplier_id")
+    business = models.ForeignKey(
+        "Businesses", models.DO_NOTHING, related_name="supplier_links"
+    )
+    supplier = models.ForeignKey(
+        "Suppliers", models.DO_NOTHING, related_name="business_links"
+    )
     is_through_table = True
+
     class Meta:
         managed = False
-        db_table = 'business_suppliers'
+        db_table = "business_suppliers"
 
 
 class BusinessTypeMap(models.Model):
-    pk = models.CompositePrimaryKey('business_id', 'type_id')
-    business = models.ForeignKey('Businesses', models.DO_NOTHING)
-    type = models.ForeignKey('BusinessTypes', models.DO_NOTHING)
+    pk = models.CompositePrimaryKey("business_id", "type_id")
+    business = models.ForeignKey("Businesses", models.DO_NOTHING)
+    type = models.ForeignKey("BusinessTypes", models.DO_NOTHING)
     is_through_table = True
+
     class Meta:
         managed = False
-        db_table = 'business_type_map'
+        db_table = "business_type_map"
 
 
 class BusinessTypes(models.Model):
     type_id = models.AutoField(primary_key=True)
     type_name = models.CharField(max_length=256, blank=True, null=True)
     is_through_table = True
+
     class Meta:
         managed = False
-        db_table = 'business_types'
+        db_table = "business_types"
 
 
 class Businesses(models.Model):
@@ -145,7 +165,9 @@ class Businesses(models.Model):
     mo_city = models.CharField(max_length=256, blank=True, null=True)
     mo_state = models.CharField(max_length=256, blank=True, null=True)
     mo_zip = models.CharField(max_length=256, blank=True, null=True)
-    class_field = models.CharField(db_column='class', max_length=1, blank=True, null=True)  # Field renamed because it was a Python reserved word.
+    class_field = models.CharField(
+        db_column="class", max_length=1, blank=True, null=True
+    )  # Field renamed because it was a Python reserved word.
     acreage = models.FloatField(blank=True, null=True)
     is_deleted = models.BooleanField(blank=True, null=True)
     date_deleted = models.DateField(blank=True, null=True)
@@ -161,17 +183,25 @@ class Businesses(models.Model):
     wants_labels = models.BooleanField(blank=True, null=True)
     num_labels = models.IntegerField(blank=True, null=True)
 
-    suppliers = models.ManyToManyField('Suppliers', through='BusinessSuppliers', related_name='businesses')
-    plant_types = models.ManyToManyField('PlantTypes', through='BusinessPlantTypes', related_name='businesses')
-    selling_seasons = models.ManyToManyField('SellingSeasons', through='BusinessSellingSeasons', related_name='businesses')
-    shipping_regions = models.ManyToManyField('ShippingRegions', through='BusinessShippingRegions', related_name='businesses')
+    suppliers = models.ManyToManyField(
+        "Suppliers", through="BusinessSuppliers", related_name="businesses"
+    )
+    plant_types = models.ManyToManyField(
+        "PlantTypes", through="BusinessPlantTypes", related_name="businesses"
+    )
+    selling_seasons = models.ManyToManyField(
+        "SellingSeasons", through="BusinessSellingSeasons", related_name="businesses"
+    )
+    shipping_regions = models.ManyToManyField(
+        "ShippingRegions", through="BusinessShippingRegions", related_name="businesses"
+    )
 
     def __str__(self):
         return (self.business_name or "").title()
 
     class Meta:
         managed = False
-        db_table = 'businesses'
+        db_table = "businesses"
 
 
 class ComplianceAgreements(models.Model):
@@ -185,7 +215,7 @@ class ComplianceAgreements(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'compliance_agreements'
+        db_table = "compliance_agreements"
 
 
 class DjangoAdminLog(models.Model):
@@ -194,12 +224,14 @@ class DjangoAdminLog(models.Model):
     object_repr = models.CharField(max_length=200)
     action_flag = models.SmallIntegerField()
     change_message = models.TextField()
-    content_type = models.ForeignKey('DjangoContentType', models.DO_NOTHING, blank=True, null=True)
+    content_type = models.ForeignKey(
+        "DjangoContentType", models.DO_NOTHING, blank=True, null=True
+    )
     user = models.ForeignKey(AuthUser, models.DO_NOTHING)
 
     class Meta:
         managed = False
-        db_table = 'django_admin_log'
+        db_table = "django_admin_log"
 
 
 class DjangoContentType(models.Model):
@@ -208,8 +240,8 @@ class DjangoContentType(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'django_content_type'
-        unique_together = (('app_label', 'model'),)
+        db_table = "django_content_type"
+        unique_together = (("app_label", "model"),)
 
 
 class DjangoMigrations(models.Model):
@@ -220,7 +252,7 @@ class DjangoMigrations(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'django_migrations'
+        db_table = "django_migrations"
 
 
 class DjangoSession(models.Model):
@@ -230,12 +262,14 @@ class DjangoSession(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'django_session'
+        db_table = "django_session"
 
 
 class Licenses(models.Model):
     license_id = models.AutoField(primary_key=True)
-    location = models.ForeignKey('Locations', on_delete=models.CASCADE, blank=True, null=True)
+    location = models.ForeignKey(
+        "Locations", on_delete=models.CASCADE, blank=True, null=True
+    )
     license_year = models.IntegerField(blank=True, null=True)
     check_number = models.CharField(max_length=256, blank=True, null=True)
     license_number = models.IntegerField(unique=True, blank=True, null=True)
@@ -245,7 +279,7 @@ class Licenses(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'licenses'
+        db_table = "licenses"
 
 
 class Locations(models.Model):
@@ -270,7 +304,7 @@ class Locations(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'locations'
+        db_table = "locations"
 
 
 class Pests(models.Model):
@@ -279,7 +313,7 @@ class Pests(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'pests'
+        db_table = "pests"
 
 
 class PlantTypes(models.Model):
@@ -288,7 +322,7 @@ class PlantTypes(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'plant_types'
+        db_table = "plant_types"
 
 
 class SellingSeasons(models.Model):
@@ -297,7 +331,7 @@ class SellingSeasons(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'selling_seasons'
+        db_table = "selling_seasons"
 
 
 class ShippingRegions(models.Model):
@@ -306,7 +340,7 @@ class ShippingRegions(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'shipping_regions'
+        db_table = "shipping_regions"
 
 
 class Suppliers(models.Model):
@@ -322,4 +356,4 @@ class Suppliers(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'suppliers'
+        db_table = "suppliers"
