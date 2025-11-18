@@ -25,6 +25,10 @@ from pypdf.generic import NameObject, BooleanObject, DictionaryObject
 
 from .models import Businesses, Locations, Licenses, Suppliers, BusinessSuppliers
 
+import base64
+import uuid
+from email.utils import formatdate
+
 
 def home_view(request):
     total_posts = Suppliers.objects.count()
@@ -165,8 +169,10 @@ def view_db_view(request):
 def generate_forms_view(request):
     return render(request, "main/generate-forms/index.html")
 
+
 def add_business(request):
     return render(request, "main/add_business/index.html")
+
 
 def update_view(request, ct, pk):
     """
@@ -177,21 +183,22 @@ def update_view(request, ct, pk):
 
     master_object = get_object_or_404(model_class, pk=pk)
 
-    local_field_names = [field.name for field in model_class._meta.fields if not field.is_relation]
-    DynamicModelForm = modelform_factory(model_class, fields=local_field_names) 
+    local_field_names = [
+        field.name for field in model_class._meta.fields if not field.is_relation
+    ]
+    DynamicModelForm = modelform_factory(model_class, fields=local_field_names)
 
-
-    if request.method == 'POST':
-        if 'delete' in request.POST:
+    if request.method == "POST":
+        if "delete" in request.POST:
             master_object.delete()
-            return redirect(request.META.get('HTTP_REFERER', '/'))
-        
+            return redirect(request.META.get("HTTP_REFERER", "/"))
+
         form = DynamicModelForm(request.POST, instance=master_object)
 
         if form.is_valid():
             form.save()
             return redirect(request.path)
- 
+
     else:
         form = DynamicModelForm(instance=master_object)
 
@@ -225,8 +232,8 @@ def update_view(request, ct, pk):
                 queryset = getattr(master_object, accessor_name).all()
 
                 related_sections[other_model._meta.verbose_name.title()] = {
-                    'items': queryset,
-                    'model': ContentType.objects.get_for_model(other_model).id
+                    "items": queryset,
+                    "model": ContentType.objects.get_for_model(other_model).id,
                 }
 
     for field in model_class._meta.get_fields():
@@ -234,8 +241,8 @@ def update_view(request, ct, pk):
             accessor_name = field.name
             queryset = getattr(master_object, accessor_name).all()
             related_sections[field.related_model._meta.verbose_name.title()] = {
-                'items': queryset,
-                'model': ContentType.objects.get_for_model(field.related_model).id
+                "items": queryset,
+                "model": ContentType.objects.get_for_model(field.related_model).id,
             }
 
     context = {
@@ -248,7 +255,6 @@ def update_view(request, ct, pk):
     return render(request, "main/update/index.html", context)
 
 
-
 def user_info_view(request):
     return render(request, "main/user-info/index.html")
 
@@ -257,49 +263,54 @@ def account_view(request):
     return render(request, "main/account/index.html")
 
 
-def dealer_generate(request):
+NURSERY_TEMPLATE_PATH = (
+    Path(settings.BASE_DIR) / "pdfs" / "nursery_renewal_fillable.pdf"
+)
+DEALER_TEMPLATE_PATH = Path(settings.BASE_DIR) / "pdfs" / "dealer_renewal_fillable.pdf"
 
+
+def dealer_generate(request):
     businesses = Businesses.objects.order_by("business_name")
     return render(
         request, "main/dealer_generate/index.html", {"businesses": businesses}
     )
 
+
 def nursery_generate(request):
+    """Page that lists all businesses for nursery PDF generation."""
     businesses = Businesses.objects.order_by("business_name")
     return render(
-        request, "main/nursery_generate/index.html", {"businesses": businesses}
+        request,
+        "main/nursery_generate/index.html",
+        {"businesses": businesses},
     )
 
-
-NURSERY_TEMPLATE_PATH = Path(settings.BASE_DIR) / "pdfs" / "nursery_renewal_fillable.pdf"
-DEALER_TEMPLATE_PATH = Path(settings.BASE_DIR) / "pdfs" / "dealer_renewal_fillable.pdf"
 
 def _fill_pdf(template_path: str, field_map: dict) -> bytes:
     reader = PdfReader(template_path)
 
-    # 1) Guard: template must have AcroForm
+    # Guard: template must have AcroForm
     root = reader.trailer.get("/Root", {})
     acroform = root.get("/AcroForm")
     if not acroform:
         raise ValueError(
             f"{template_path} has no AcroForm (not a fillable PDF). "
-            "Be sure you are using the *fillable* template."
+            "Ensure you are using a fillable template."
         )
 
     writer = PdfWriter()
 
-    # 2) Copy pages first
+    # Copy pages
     for p in reader.pages:
         writer.add_page(p)
 
-    # 3) Copy the AcroForm from reader to writer *before* updating values
+    # Copy AcroForm before setting values
     writer._root_object.update({NameObject("/AcroForm"): acroform})
 
-    # 4) Now it's safe to set field values
-    #    (adjust page index if your fields are on a later page)
+    # Update fields (assuming on page 0)
     writer.update_page_form_field_values(writer.pages[0], field_map)
 
-    # 5) Make sure appearances render in viewers
+    # Ensure appearance streams are rendered
     writer._root_object["/AcroForm"].update(
         {NameObject("/NeedAppearances"): BooleanObject(True)}
     )
@@ -309,35 +320,33 @@ def _fill_pdf(template_path: str, field_map: dict) -> bytes:
     return out.getvalue()
 
 
-def download_nursery_pdf(request, business_id: int):
-    try:
-        biz = Businesses.objects.get(pk=business_id)
-    except Businesses.DoesNotExist:
-        raise Http404("Business not found")
+def _compute_amount_due(acreage: float) -> tuple[str, float]:
+    """Return (formatted_str, numeric_amount)."""
+    amount = 40.00 + 1.50 * acreage
+    return f"${amount:,.2f}", amount
 
-    # Choose a representative location (adjust selection rule if needed)
-    location = Locations.objects.filter(business=biz).order_by("location_id").first()
 
-    # Fees: $40 + $1.50 per acre
-    acreage = float(biz.acreage or 0)
-    amount_due_val = 40.00 + 1.50 * acreage
-    amount_due_str = f"${amount_due_val:,.2f}"
+def _extract_location_lines(biz: Businesses, max_lines: int = 4):
+    """Return (list_of_lines, first_location_obj)."""
+    first_loc = Locations.objects.filter(business=biz).order_by("location_id").first()
+    lines = []
 
-    # Field locations: split notes across up to 4 lines (or synthesize)
-    location_lines = []
-    if location and (location.field_location_notes or "").strip():
-        for line in (location.field_location_notes or "").splitlines():
-            line = line.strip()
-            if line:
-                location_lines.append(line)
-            if len(location_lines) == 4:
+    # Prefer notes
+    if first_loc and (first_loc.field_location_notes or "").strip():
+        for line in (first_loc.field_location_notes or "").splitlines():
+            stripped = line.strip()
+            if stripped:
+                lines.append(stripped)
+            if len(lines) == max_lines:
                 break
     else:
+        # Fallback: use location city/county/zip
         qs = (
             Locations.objects.filter(business=biz)
             .order_by("location_id")
             .values("city", "county", "zip_code")
-        )[:4]
+        )[:max_lines]
+
         for rec in qs:
             parts = [
                 p
@@ -345,90 +354,158 @@ def download_nursery_pdf(request, business_id: int):
                 if p
             ]
             if parts:
-                location_lines.append(", ".join(parts))
-    while len(location_lines) < 4:
-        location_lines.append("")
+                lines.append(", ".join(parts))
 
-    # Checkbox (email vs USPS) — set as you wish or leave "Off"
-    prefers_email = True
-    checkbox_val = "Yes" if prefers_email else "Off"
+    while len(lines) < max_lines:
+        lines.append("")
 
-    # Today’s date for the certification line
+    return lines, first_loc
+
+
+def _nursery_fieldmap(biz: Businesses):
+    """Build field_map for nursery renewal PDFs."""
+    acreage = float(biz.acreage or 0)
+    amount_due_str, _ = _compute_amount_due(acreage)
+    location_lines, first_loc = _extract_location_lines(biz)
+
+    checkbox_val = "Yes"
     today_str = timezone.localdate().strftime("%m/%d/%Y")
 
-    # Map DB → THIS form’s fields
-    field_map = {
-        # Header: put business_id into “License Number”
-        "License Number": str(business_id),
+    return {
+        "License Number": str(biz.pk),
         "current_license_year1": "",
-        # Mailing Information
         "business_name": biz.business_name or "",
         "mailing_address": biz.mo_address or "",
         "main_office_city1": biz.mo_city or "",
         "main_office_state": biz.mo_state or "",
         "main_office_zip1": biz.mo_zip or "",
-        "main_office_county": (location.county if location and location.county else ""),
-        # Contact
+        "main_office_county": (
+            first_loc.county if first_loc and first_loc.county else ""
+        ),
         "main_contact_name": biz.main_contact_name or "",
         "main_office_city2": biz.mo_city or "",
         "main_office_zip2": biz.mo_zip or "",
         "phone_number": biz.main_contact_phone or "",
         "fax": "",
         "main_contact_email": biz.main_contact_email or "",
-        # Field locations (4 lines on this form)
         "field_location1": location_lines[0],
         "field_location2": location_lines[1],
         "field_location3": location_lines[2],
         "field_location4": location_lines[3],
-        # Fees
         "acreage": f"{acreage:g}",
         "amount_due": amount_due_str,
-        "Amt": amount_due_str,  # mirror into bottom box if desired
-        # Checkbox + date
+        "Amt": amount_due_str,
         "Check Box17": checkbox_val,
         "Date": today_str,
-        # Bottom admin box
         "Lic Year": "",
         "Date Recd": "",
         "Check": "",
     }
 
-    filled = _fill_pdf(str(NURSERY_TEMPLATE_PATH), field_map)
-    resp = HttpResponse(filled, content_type="application/pdf")
-    resp["Content-Disposition"] = (
-        f'attachment; filename="nursery_renewal_{business_id}.pdf"'
-    )
-    return resp
 
-def download_dealer_pdf(request, business_id: int):
-    try:
-        biz = Businesses.objects.get(pk=business_id)
-    except Businesses.DoesNotExist:
-        raise Http404("Business not found")
-
-#    supplier_names = (Suppliers.objects
-#                      .filter(businesssuppliers__business=biz)
-#                      .values_list("supplier_name", flat=True))
-
-    data = {
-        "business_name":      biz.business_name,
-        "mailing_address":    biz.mo_address,
-        "main_office_city":   biz.mo_city,
-        "main_office_state":  biz.mo_state,
-        "main_office_zip":    biz.mo_zip,
-        "main_contact_name":  biz.main_contact_name or "",
+def _dealer_fieldmap(biz: Businesses):
+    """Build field_map for dealer renewal PDFs."""
+    return {
+        "business_name": biz.business_name,
+        "mailing_address": biz.mo_address,
+        "main_office_city": biz.mo_city,
+        "main_office_state": biz.mo_state,
+        "main_office_zip": biz.mo_zip,
+        "main_contact_name": biz.main_contact_name or "",
         "main_contact_phone": biz.main_contact_phone or "",
-        "fax":                "",                       # gotta add this to db too
-        "email":              biz.main_contact_email or "",
-        "renewal_year1":      "",                       # current license year
-        "renewal_year2":      "",
+        "fax": "",
+        "email": biz.main_contact_email or "",
+        "renewal_year1": "",
+        "renewal_year2": "",
         "current_license_year": "",
-        "email_pref":         True,                     # check models later
-        "usps_pref":          False,
-#        "suppliers":          list(supplier_names),
+        "email_pref": True,
+        "usps_pref": False,
     }
 
-    filled_bytes = _fill_pdf(str(DEALER_TEMPLATE_PATH), data)
-    resp = HttpResponse(filled_bytes, content_type="application/pdf")
-    resp["Content-Disposition"] = f'attachment; filename="dealer_renewal_{business_id}.pdf"'
+
+def _build_eml(to_addr: str, subject: str, pdf_bytes: bytes, filename: str) -> str:
+    """Return raw .eml formatted email with PDF attachment."""
+    boundary = uuid.uuid4().hex
+    pdf_b64 = base64.b64encode(pdf_bytes).decode("ascii")
+
+    return f"""X-Unsent: 1
+From:
+To: {to_addr}
+Subject: {subject}
+Date: {formatdate(localtime=True)}
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="{boundary}"
+
+--{boundary}
+Content-Type: text/plain; charset="utf-8"
+
+Attached is the file "{filename}".
+
+--{boundary}
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="{filename}"
+Content-Transfer-Encoding: base64
+
+{pdf_b64}
+
+--{boundary}--
+"""
+
+
+# ==========================================
+#    REFACTORED PDF/EML VIEW FUNCTIONS
+# ==========================================
+
+
+def preview_nursery_pdf(request, business_id: int):
+    biz = get_object_or_404(Businesses, pk=business_id)
+    field_map = _nursery_fieldmap(biz)
+    pdf_bytes = _fill_pdf(str(NURSERY_TEMPLATE_PATH), field_map)
+    filename = f"nursery renewal - {biz.business_name}.pdf"
+
+    resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+    resp["Content-Disposition"] = f'inline; filename="{filename}"'
+    resp["Content-Length"] = len(pdf_bytes)
+    return resp
+
+
+def download_nursery_pdf(request, business_id: int):
+    biz = get_object_or_404(Businesses, pk=business_id)
+    field_map = _nursery_fieldmap(biz)
+
+    pdf_bytes = _fill_pdf(str(NURSERY_TEMPLATE_PATH), field_map)
+    filename = f"nursery renewal - {biz.business_name}.pdf"
+
+    resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+    resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return resp
+
+
+def download_nursery_eml(request, business_id: int):
+    biz = get_object_or_404(Businesses, pk=business_id)
+
+    # Build PDF first
+    field_map = _nursery_fieldmap(biz)
+    pdf_bytes = _fill_pdf(str(NURSERY_TEMPLATE_PATH), field_map)
+
+    filename = f"nursery renewal - {biz.business_name}.pdf"
+    subject = f"Nursery Renewal PDF for {biz.business_name}"
+    to_addr = biz.main_contact_email or ""
+
+    eml_body = _build_eml(to_addr, subject, pdf_bytes, filename)
+
+    resp = HttpResponse(eml_body, content_type="message/rfc822")
+    resp["Content-Disposition"] = f'attachment; filename="{filename}.eml"'
+    return resp
+
+
+def download_dealer_pdf(request, business_id: int):
+    biz = get_object_or_404(Businesses, pk=business_id)
+    field_map = _dealer_fieldmap(biz)
+
+    pdf_bytes = _fill_pdf(str(DEALER_TEMPLATE_PATH), field_map)
+    filename = f"dealer_renewal_{business_id}.pdf"
+
+    resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+    resp["Content-Disposition"] = f'attachment; filename="{filename}"'
     return resp
