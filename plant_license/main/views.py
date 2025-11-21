@@ -442,7 +442,6 @@ def export_table_as_csv(request):
     return response
 
 
-
 def export_table_as_xlsx(request):
     # 1. Create a new Workbook and get the active worksheet
     workbook = Workbook()
