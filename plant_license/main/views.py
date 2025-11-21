@@ -22,7 +22,7 @@ from django.conf import settings
 from django.utils import timezone
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
-from openpyxl.styles import Protection
+from openpyxl.styles import Protection, PatternFill
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import NameObject, BooleanObject, DictionaryObject
@@ -443,47 +443,7 @@ def export_table_as_csv(request):
 
 
 
-
 def export_table_as_xlsx(request):
-    # 1. Create a new Workbook and get the active worksheet
-    workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = "Business Data" 
-
-    # 2. Configure the HTTP Response for XLSX
-    # 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' is the Mime Type for .xlsx
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        headers={'Content-Disposition': 'attachment; filename="data.xlsx"'},
-    )
-
-    # 3. Get all data from your model
-    queryset = Businesses.objects.all()
-
-    # Check if there is any data to write
-    if not queryset.exists():
-        
-        pass 
-
-    # 4. Get the model's field names
-    field_names = [field.name for field in Businesses._meta.fields]
-
-    # 5. Write the header row
-    # The append method is the easiest way to write a row
-    worksheet.append(field_names)
-
-    # 6. Iterate over the queryset and write each row to the worksheet
-    for obj in queryset:
-        # Create a list of values for the current object
-        row = [getattr(obj, field) for field in field_names]
-        worksheet.append(row)
-
-    # 7. Save the workbook to the HttpResponse file-like object
-    workbook.save(response)
-
-    return response
-
-def export_table_as_xlsx_protected(request):
     # 1. Create a new Workbook and get the active worksheet
     workbook = Workbook()
     worksheet = workbook.active
@@ -522,7 +482,8 @@ def export_table_as_xlsx_protected(request):
             cell = worksheet[f'{col_letter}{row_num}']
             
             # Key Step 1: Set the protection to 'unlocked'
-            cell.protection = Protection(locked=True)
+            cell.protection = Protection(locked=False)
+            
         
         row_num += 1
 
