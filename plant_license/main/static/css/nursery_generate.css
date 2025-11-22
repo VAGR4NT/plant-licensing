@@ -93,12 +93,6 @@ h1 {
   width: fit-content; /* keeps it button-sized */
   background-color: var(--color-wildcat-black);
 }
-#email-change-btn {
-  display: block;
-  margin: 1rem auto; /* centers block elements */
-  width: fit-content; /* keeps it button-sized */
-  background-color: var(--color-wildcat-black);
-}
 
 button.btn {
   background-color: var(--color-wildcat-blue);
@@ -192,6 +186,7 @@ button.btn:hover {
   font-size: 1.05rem;
   border-radius: 10px;
   min-width: 220px;
+  font-weight: 600;
 }
 
 #save-button:hover {
@@ -218,4 +213,24 @@ button.btn:hover {
 /* optional: fade-in spacing container */
 .renewal-section-wrapper {
   margin-top: 2rem;
+}
+
+.renewal-section-wrapper .btn {
+  display: block;
+  margin: 0 auto;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  width: fit-content;
+
+  background-color: var(--color-goldenrod);
+  color: var(--color-midnight);
+  font-weight: 600;
+}
+
+.renewal-section-wrapper .btn:hover,
+.renewal-section-wrapper .btn:focus {
+  background-color: var(--color-sunset);
+  color: var(--color-wildcat-white);
+  transform: translateY(-2px);
+  outline: none;
 }

@@ -10,7 +10,7 @@
 {% block content %}
 
 <h1>Dealer License Renewal</h1>
-<a href="{% url 'generate_forms' %}" id="nursery-btn" class="btn">Generate Nursery Licenses</a>
+<a href="{% url 'nursery_generate' %}" id="nursery-btn" class="btn">Generate Nursery Licenses</a>
 <hr>
 
 <div class="form-container">
@@ -37,7 +37,7 @@
 
       <div class="form-controls">
           <button type="submit" class="btn primary" id="save-button">
-            Save Email Changes
+            Save Template Changes
           </button>
       </div>
   </form>
@@ -45,6 +45,8 @@
 
 <div class="renewal-section-wrapper">
   <h2 class="renewal-section-title">License Renewals</h2>
+
+  <button class="btn" onclick="toggleOrder()">Reverse Display Order</button>
 </div>
 
 {% for b in businesses %}
@@ -57,13 +59,21 @@
 
     <div class="actions">
 
-        <!-- Unified Dealer Email Download -->
+        <!-- Download Dealer Email -->
         <a class="btn secondary"
            href="{% url 'download_eml' 'dealer' b.business_id %}">
             Download Email (.eml)
         </a>
 
-        <!-- Unified Dealer PDF Preview -->
+        <!-- Download Dealer PDF -->
+        <a 
+            class="btn secondary"
+            href="{% url 'download_pdf' 'dealer' b.business_id %}"
+        >
+            Download PDF
+        </a>
+
+        <!-- Show Dealer PDF Preview -->
         <button 
             class="btn preview-btn"
             onclick="togglePreview(this)"
@@ -105,5 +115,15 @@
 {% endblock %}
 
 {% block page_js %}
-  <script src="{% static 'js/generate-forms/pdf-preview.js' %}"></script>
+<script src="{% static 'js/generate-forms/pdf-preview.js' %}"></script>
+
+<script>
+function toggleOrder() {
+    const url = new URL(window.location.href);
+    const current = url.searchParams.get("reverse") === "1";
+    url.searchParams.set("reverse", current ? "0" : "1");
+    window.location.href = url.toString();
+}
+</script>
+
 {% endblock %}

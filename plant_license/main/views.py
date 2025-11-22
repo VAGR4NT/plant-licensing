@@ -464,16 +464,16 @@ LICENSE_TYPES = {
     "nursery": {
         "template_path": NURSERY_TEMPLATE_PATH,
         "template_defaults": {
-            "subject": "Nursery Renewal PDF for {business_name}",
-            "body": 'Attached is the file "{filename}".',
+            "subject": "Plant License Renewal for {business_name}",
+            "body": 'Attached is the renewal form: "{filename}".',
         },
         "fieldmap": _nursery_fieldmap,
     },
     "dealer": {
         "template_path": DEALER_TEMPLATE_PATH,
         "template_defaults": {
-            "subject": "Dealer Renewal PDF for {business_name}",
-            "body": 'Attached is the file "{filename}".',
+            "subject": "Plant License Renewal for {business_name}",
+            "body": 'Attached is the renewal form: "{filename}".',
         },
         "fieldmap": _dealer_fieldmap,
     },
@@ -560,23 +560,37 @@ def download_eml(request, kind: str, business_id: int):
 def generate_page(request, kind: str, template_name: str):
     tmpl, _ = _load_email_template(kind)
 
+    # --- Handle email template save ---
     if request.method == "POST":
         tmpl.subject = request.POST.get("subject", "")
         tmpl.body = request.POST.get("body", "")
         tmpl.save()
         messages.success(request, "Email template updated.")
 
-    businesses = Businesses.objects.order_by(
-        F("wants_email_renewal").desc(nulls_last=True),
-        "business_name",
-    )
+    # --- Ordering toggle (must run for both GET and POST) ---
+    reverse_order = request.GET.get("reverse", "0") == "1"
 
+    if reverse_order:
+        # reversed: False first, then True
+        businesses = Businesses.objects.order_by(
+            F("wants_email_renewal").asc(nulls_last=True),
+            "business_name",
+        )
+    else:
+        # normal: True first, then False
+        businesses = Businesses.objects.order_by(
+            F("wants_email_renewal").desc(nulls_last=True),
+            "business_name",
+        )
+
+    # --- Render page ---
     return render(
         request,
         template_name,
         {
             "businesses": businesses,
             "template": tmpl,
+            "reverse_order": reverse_order,
         },
     )
 

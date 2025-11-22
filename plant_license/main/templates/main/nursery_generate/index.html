@@ -37,7 +37,7 @@
 
       <div class="form-controls">
           <button type="submit" class="btn primary" id="save-button">
-            Save Email Changes
+            Save Template Changes
           </button>
       </div>
   </form>
@@ -45,6 +45,8 @@
 
 <div class="renewal-section-wrapper">
   <h2 class="renewal-section-title">License Renewals</h2>
+
+  <button class="btn" onclick="toggleOrder()">Reverse Display Order</button>
 </div>
 
 {% for b in businesses %}
@@ -55,25 +57,33 @@
         <span style="font-weight: normal;">{{ b.wants_email_renewal }}</span>
     </div>
 
-    <div class="actions">
+<div class="actions">
 
-        <!-- Unified Email Download -->
-        <a class="btn secondary"
-           href="{% url 'download_eml' 'nursery' b.business_id %}">
-            Download Email (.eml)
-        </a>
+    <!-- Download Email -->
+    <a class="btn secondary"
+       href="{% url 'download_eml' 'nursery' b.business_id %}">
+        Download Email (.eml)
+    </a>
+    <!-- Download PDF -->
+    <a 
+        class="btn secondary"
+        href="{% url 'download_pdf' 'nursery' b.business_id %}"
+    >
+        Download PDF
+    </a>
 
-        <!-- Unified PDF Preview -->
-        <button 
-            class="btn preview-btn"
-            onclick="togglePreview(this)"
-            data-biz="{{ b.business_id }}"
-            data-preview-url="{% url 'preview_pdf' 'nursery' b.business_id %}"
-        >
-            Show PDF
-        </button>
+    <!-- Show PDF (preview) -->
+    <button 
+        class="btn preview-btn"
+        onclick="togglePreview(this)"
+        data-biz="{{ b.business_id }}"
+        data-preview-url="{% url 'preview_pdf' 'nursery' b.business_id %}"
+    >
+        Show PDF
+    </button>
 
-    </div>
+
+</div>
 
     <div id="preview-{{ b.business_id }}" class="preview-container">
 
@@ -106,4 +116,17 @@
 
 {% block page_js %}
   <script src="{% static 'js/generate-forms/pdf-preview.js' %}"></script>
+
+<script>
+function toggleOrder() {
+    const url = new URL(window.location.href);
+    const current = url.searchParams.get("reverse") === "1";
+    url.searchParams.set("reverse", current ? "0" : "1");
+    window.location.href = url.toString();
+}
+</script>
+
+
 {% endblock %}
+
+
