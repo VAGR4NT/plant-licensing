@@ -9,7 +9,7 @@ from .autocomplete import SupplierAutocomplete
 urlpatterns = [
     # Root redirect → /login/
     path("", RedirectView.as_view(pattern_name="login", permanent=False)),
-    # Login/logout
+    # Login / Logout
     path(
         "login/",
         auth_views.LoginView.as_view(
@@ -36,11 +36,18 @@ urlpatterns = [
     path("user-info/", views.user_info_view, name="user_info"),
     path("specific_view/", views.specific_view, name="specific_view"),
     path("account/", views.account_view, name="account"),
+    # nursery and dealer pdf/eml generation
     path("nursery_generate/", views.nursery_generate, name="nursery_generate"),
     path("dealer_generate/", views.dealer_generate, name="dealer_generate"),
     path(
-        "nursery/<int:business_id>/download/",
-        download_nursery_pdf,
-        name="download_nursery_pdf",
+        "<str:kind>/<int:business_id>/preview/", views.preview_pdf, name="preview_pdf"
+    ),
+    path(
+        "<str:kind>/<int:business_id>/download/",
+        views.download_pdf,
+        name="download_pdf",
+    ),
+    path(
+        "<str:kind>/<int:business_id>/email/", views.download_eml, name="download_eml"
     ),
 ]

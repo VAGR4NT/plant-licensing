@@ -1,10 +1,6 @@
 from django.db import models
 from django.utils import timezone
 
-# ==========================================
-# 1. LOOKUP TABLES (Keeping Plural Names)
-# ==========================================
-
 class BusinessTypes(models.Model):
     type_id = models.AutoField(primary_key=True)
     type_name = models.CharField(max_length=100, unique=True)
@@ -15,7 +11,6 @@ class BusinessTypes(models.Model):
 
     def __str__(self):
         return self.type_name
-
 
 class PlantTypes(models.Model):
     plant_type_id = models.AutoField(primary_key=True)
@@ -51,7 +46,6 @@ class ShippingRegions(models.Model):
 
     def __str__(self):
         return self.name
-
 
 class Suppliers(models.Model):
     supplier_id = models.AutoField(primary_key=True)
@@ -100,10 +94,6 @@ class Pests(models.Model):
         return self.common_name
 
 
-# ==========================================
-# 2. CORE ENTITIES (Businesses & Locations)
-# ==========================================
-
 class Businesses(models.Model):
     business_id = models.AutoField(primary_key=True)
     
@@ -114,13 +104,11 @@ class Businesses(models.Model):
     business_name = models.CharField(max_length=255, unique=True)
     dba_business_name = models.CharField(max_length=255, blank=True, null=True)
     
-    # Main Office Address
     mo_address = models.CharField(max_length=255, blank=True, null=True)
     mo_city = models.CharField(max_length=100, blank=True, null=True)
     mo_state = models.CharField(max_length=2, blank=True, null=True)
     mo_zip = models.CharField(max_length=10, blank=True, null=True)
     
-    # Contact Info
     main_contact_name = models.CharField(max_length=255, blank=True, null=True)
     main_contact_phone = models.CharField(max_length=30, blank=True, null=True)
     main_contact_email = models.EmailField(max_length=255, blank=True, null=True)
@@ -128,28 +116,23 @@ class Businesses(models.Model):
     main_contact_fax = models.CharField(max_length=30, blank=True, null=True)
     main_contact_alt_email = models.EmailField(max_length=255, blank=True, null=True)
 
-    # Details
     class_code = models.CharField(max_length=1, choices=[('A', 'A'), ('B', 'B')], db_column='class', blank=True, null=True)
     acreage = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     priority_rank = models.CharField(max_length=50, blank=True, null=True)
     
-    # Flags
     is_interstate_shipper = models.BooleanField(default=False)
     wants_email_renewal = models.BooleanField(default=False)
     wants_email_license = models.BooleanField(default=False)
     wants_labels = models.BooleanField(default=False)
     num_labels = models.IntegerField(blank=True, null=True)
     
-    # System Flags
     is_deleted = models.BooleanField(default=False)
     date_deleted = models.DateField(blank=True, null=True)
     deletion_reason = models.TextField(blank=True, null=True)
     date_applied = models.DateField(default=timezone.now)
 
-    # Legacy / Notes
     formerly_known_as = models.CharField(max_length=255, blank=True, null=True)
 
-    # RELATIONSHIPS
     suppliers = models.ManyToManyField(Suppliers, db_table='business_suppliers', blank=True)
     business_types = models.ManyToManyField(BusinessTypes, db_table='business_type_map', blank=True)
     plant_types = models.ManyToManyField(PlantTypes, db_table='business_plant_types', blank=True)

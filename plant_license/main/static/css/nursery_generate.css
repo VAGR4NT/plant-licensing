@@ -1,13 +1,221 @@
+.business-card {
+  background: var(--color-warm-neutral-20);
+  border: 1px solid var(--color-cool-neutral);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+.business-header {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--color-midnight);
+  margin-bottom: 1rem;
+  justify-content: center;
+}
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.preview-container {
+  display: none;
+  margin-top: 1rem;
+  position: relative;
+  min-height: 200px;
+}
+.preview-frame {
+  width: 100%;
+  height: 800px;
+  border: 1px solid var(--color-cool-neutral);
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.preview-frame.loaded {
+  opacity: 1;
+}
+.loading-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--color-midnight);
+  z-index: 10;
+}
+.loading-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid var(--color-midnight);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.preview-status {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.preview-status.error {
+  background-color: #ffe6e6;
+  color: #d00;
+  border: 1px solid #ffcccc;
+}
+.preview-status.info {
+  background-color: #e6f3ff;
+  color: #0066cc;
+  border: 1px solid #cce5ff;
+}
+
 h1 {
   text-align: center;
 }
 
-#dealer-btn {
+#dealer-btn,
+#nursery-btn {
   display: block;
   margin: 1rem auto; /* centers block elements */
   width: fit-content; /* keeps it button-sized */
+  background-color: var(--color-wildcat-black);
+}
+#email-change-btn {
+  display: block;
+  margin: 1rem auto; /* centers block elements */
+  width: fit-content; /* keeps it button-sized */
+  background-color: var(--color-wildcat-black);
+}
+
+button.btn {
+  background-color: var(--color-wildcat-blue);
+}
+button.btn:hover {
+  background-color: var(--color-bluegrass);
 }
 
 .datatable-container {
   margin: 1rem 0;
+}
+
+/* -----------------------------
+   EMAIL FORM CONTAINER
+------------------------------ */
+.form-container {
+  background: var(--color-warm-neutral-20);
+  border: 1px solid var(--color-cool-neutral);
+  border-radius: 1rem;
+  padding: 2rem 2.5rem;
+  margin: 2rem auto 3rem;
+  max-width: 700px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-container h2 {
+  text-align: center;
+  font-size: 1.6rem;
+  color: var(--color-wildcat-black);
+  margin-bottom: 1.5rem;
+}
+
+/* -----------------------------
+   FORM FIELD GROUP
+------------------------------ */
+.form-field {
+  margin-bottom: 1.75rem;
+  text-align: left;
+}
+
+.form-field label {
+  display: block;
+  font-weight: bold;
+  font-size: 1.05rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-midnight);
+}
+
+/* -----------------------------
+   INPUT & TEXTAREA
+------------------------------ */
+.form-field input[type="text"],
+.form-field textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-cool-neutral);
+  background: white;
+  font-size: 1rem;
+  font-family: inherit;
+  transition:
+    border 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.form-field input[type="text"]:focus,
+.form-field textarea:focus {
+  border-color: var(--color-bluegrass);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 113, 235, 0.2);
+}
+
+.form-field textarea {
+  height: 160px;
+  resize: vertical;
+}
+
+/* -----------------------------
+   FORM CONTROLS
+------------------------------ */
+.form-controls {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+/* Button matches your theme */
+#save-button {
+  background-color: var(--color-wildcat-blue);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.05rem;
+  border-radius: 10px;
+  min-width: 220px;
+}
+
+#save-button:hover {
+  background-color: var(--color-bluegrass);
+}
+
+/* ------------------------------------
+   License Renewals Section Header
+------------------------------------- */
+.renewal-section-title {
+  text-align: center;
+  font-size: 1.7rem;
+  color: var(--color-wildcat-black);
+  margin: 3rem auto 2rem;
+  padding-bottom: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+
+  /* subtle separator line */
+  border-bottom: 4px solid var(--color-wildcat-blue);
+  width: fit-content;
+}
+
+/* optional: fade-in spacing container */
+.renewal-section-wrapper {
+  margin-top: 2rem;
 }

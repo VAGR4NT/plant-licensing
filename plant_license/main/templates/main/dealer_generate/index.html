@@ -1,16 +1,109 @@
 {% extends "main/base.html" %}
 {% load static %}
 
-{% block title %} Dealer Generate {% endblock %}
+{% block title %} Dealer License Renewal {% endblock %}
 
 {% block page_css %}
-    <link rel="stylesheet" href="{% static 'css/dealer_generate.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/nursery_generate.css' %}">
 {% endblock %}
-
 
 {% block content %}
 
-<h1>Dealer PDFs</h1>
-<a href="{% url 'nursery_generate' %}" id="nursery-btn" class="btn">Generate Nursery PDFs</a>
+<h1>Dealer License Renewal</h1>
+<a href="{% url 'generate_forms' %}" id="nursery-btn" class="btn">Generate Nursery Licenses</a>
+<hr>
 
+<div class="form-container">
+  <h2>Dealer Email Template</h2>
+
+  <form class="form-section" method="POST">
+      {% csrf_token %}
+
+      <div class="form-field">
+        <label for="subject">Subject</label>
+        <input
+            id="subject"
+            type="text"
+            name="subject"
+            value="{{ template.subject }}"
+            placeholder="Email Subject"
+        >
+      </div>
+
+      <div class="form-field">
+        <label for="body">Email Body</label>
+        <textarea id="body" name="body">{{ template.body }}</textarea>
+      </div>
+
+      <div class="form-controls">
+          <button type="submit" class="btn primary" id="save-button">
+            Save Email Changes
+          </button>
+      </div>
+  </form>
+</div>
+
+<div class="renewal-section-wrapper">
+  <h2 class="renewal-section-title">License Renewals</h2>
+</div>
+
+{% for b in businesses %}
+<div class="business-card">
+
+    <div class="business-header">
+        {{ b.business_name }} — Renewal Email:
+        <span style="font-weight: normal;">{{ b.wants_email_renewal }}</span>
+    </div>
+
+    <div class="actions">
+
+        <!-- Unified Dealer Email Download -->
+        <a class="btn secondary"
+           href="{% url 'download_eml' 'dealer' b.business_id %}">
+            Download Email (.eml)
+        </a>
+
+        <!-- Unified Dealer PDF Preview -->
+        <button 
+            class="btn preview-btn"
+            onclick="togglePreview(this)"
+            data-biz="{{ b.business_id }}"
+            data-preview-url="{% url 'preview_pdf' 'dealer' b.business_id %}"
+        >
+            Show PDF
+        </button>
+
+    </div>
+
+    <div id="preview-{{ b.business_id }}" class="preview-container">
+
+        <!-- Loading indicator -->
+        <div class="loading-indicator" id="loading-{{ b.business_id }}">
+            <div class="loading-spinner"></div>
+            <div>Loading PDF preview...</div>
+        </div>
+
+        <!-- Status messages -->
+        <div class="preview-status" id="status-{{ b.business_id }}" style="display: none;"></div>
+
+        <!-- PDF iframe -->
+        <iframe
+            id="iframe-{{ b.business_id }}"
+            class="preview-frame"
+            data-preview-url="{% url 'preview_pdf' 'dealer' b.business_id %}"
+            src="about:blank"
+            onload="onIframeLoad(this)"
+            onerror="onIframeError(this)"
+        ></iframe>
+    </div>
+
+</div>
+{% empty %}
+<p>No businesses found.</p>
+{% endfor %}
+
+{% endblock %}
+
+{% block page_js %}
+  <script src="{% static 'js/generate-forms/pdf-preview.js' %}"></script>
 {% endblock %}

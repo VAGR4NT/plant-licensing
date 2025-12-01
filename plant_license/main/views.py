@@ -15,6 +15,9 @@ import json
 from django.apps import apps
 from django.db.models import ForeignKey, OneToOneField, ManyToManyField
 from django.views.generic import CreateView, UpdateView
+from django.db.models import F
+from .models import EmailTemplate
+from django.contrib import messages
 from io import BytesIO
 from pathlib import Path
 from django.conf import settings
@@ -26,6 +29,11 @@ from pypdf.generic import NameObject, BooleanObject, DictionaryObject
 from .models import Businesses, Locations, Licenses, Suppliers, ComplianceAgreements
 from .forms import DealerForm, NurseryForm, LocationForm, ComplianceForm
 from django.db import transaction
+from .models import Businesses, Locations, Licenses, Suppliers, BusinessSuppliers
+
+import base64
+import uuid
+from email.utils import formatdate
 
 def home_view(request):
     total_posts = Suppliers.objects.count()
@@ -240,14 +248,14 @@ def update_view(request, ct, pk):
     if request.method == 'POST':
         if 'delete' in request.POST:
             master_object.delete()
-            return redirect(request.META.get('HTTP_REFERER', '/'))
-        
+            return redirect(request.META.get("HTTP_REFERER", "/"))
+
         form = DynamicModelForm(request.POST, instance=master_object)
 
         if form.is_valid():
             form.save()
             return redirect(request.path)
- 
+
     else:
         form = DynamicModelForm(instance=master_object)
 
@@ -291,6 +299,7 @@ def update_view(request, ct, pk):
 
     return render(request, "main/update/index.html", context)
 
+
 def user_info_view(request):
     return render(request, "main/user-info/index.html")
 
@@ -299,46 +308,46 @@ def account_view(request):
     return render(request, "main/account/index.html")
 
 
-def dealer_generate(request):
-    return render(request, "main/dealer_generate/index.html")
+# ============================================================
+# PDF TEMPLATE PATHS
+# ============================================================
+
+NURSERY_TEMPLATE_PATH = (
+    Path(settings.BASE_DIR) / "pdfs" / "nursery_renewal_fillable.pdf"
+)
+DEALER_TEMPLATE_PATH = Path(settings.BASE_DIR) / "pdfs" / "dealer_renewal_fillable.pdf"
 
 
-def nursery_generate(request):
-    businesses = Businesses.objects.order_by("business_name")
-    return render(
-        request, "main/nursery_generate/index.html", {"businesses": businesses}
-    )
-
-
-TEMPLATE_PATH = Path(settings.BASE_DIR) / "pdfs" / "nursery_renewal_fillable.pdf"
+# ============================================================
+# SHARED PDF FILL FUNCTION
+# ============================================================
 
 
 def _fill_pdf(template_path: str, field_map: dict) -> bytes:
     reader = PdfReader(template_path)
 
-    # 1) Guard: template must have AcroForm
+    # Guard: template must have AcroForm
     root = reader.trailer.get("/Root", {})
     acroform = root.get("/AcroForm")
     if not acroform:
         raise ValueError(
             f"{template_path} has no AcroForm (not a fillable PDF). "
-            "Be sure you are using the *fillable* template."
+            "Ensure you are using a fillable template."
         )
 
     writer = PdfWriter()
 
-    # 2) Copy pages first
+    # Copy pages
     for p in reader.pages:
         writer.add_page(p)
 
-    # 3) Copy the AcroForm from reader to writer *before* updating values
+    # Copy AcroForm
     writer._root_object.update({NameObject("/AcroForm"): acroform})
 
-    # 4) Now it's safe to set field values
-    #    (adjust page index if your fields are on a later page)
+    # Apply field values
     writer.update_page_form_field_values(writer.pages[0], field_map)
 
-    # 5) Make sure appearances render in viewers
+    # Ensure appearance streams are rendered
     writer._root_object["/AcroForm"].update(
         {NameObject("/NeedAppearances"): BooleanObject(True)}
     )
@@ -348,36 +357,37 @@ def _fill_pdf(template_path: str, field_map: dict) -> bytes:
     return out.getvalue()
 
 
-def download_nursery_pdf(request, business_id: int):
-    # Get the business row by business_id (this is your “key”)
-    try:
-        biz = Businesses.objects.get(pk=business_id)
-    except Businesses.DoesNotExist:
-        raise Http404("Business not found")
+# ============================================================
+# NURSERY FIELD HELPERS
+# ============================================================
 
-    # Choose a representative location (adjust selection rule if needed)
-    location = Locations.objects.filter(business=biz).order_by("location_id").first()
 
-    # Fees: $40 + $1.50 per acre
-    acreage = float(biz.acreage or 0)
-    amount_due_val = 40.00 + 1.50 * acreage
-    amount_due_str = f"${amount_due_val:,.2f}"
+def _compute_amount_due(acreage: float) -> tuple[str, float]:
+    amount = 40.00 + 1.50 * acreage
+    return f"${amount:,.2f}", amount
 
-    # Field locations: split notes across up to 4 lines (or synthesize)
-    location_lines = []
-    if location and (location.field_location_notes or "").strip():
-        for line in (location.field_location_notes or "").splitlines():
-            line = line.strip()
-            if line:
-                location_lines.append(line)
-            if len(location_lines) == 4:
+
+def _extract_location_lines(biz: Businesses, max_lines: int = 4):
+    """Return (list_of_lines, first_location_obj)."""
+    first_loc = Locations.objects.filter(business=biz).order_by("location_id").first()
+    lines = []
+
+    # Prefer notes
+    if first_loc and (first_loc.field_location_notes or "").strip():
+        for line in (first_loc.field_location_notes or "").splitlines():
+            stripped = line.strip()
+            if stripped:
+                lines.append(stripped)
+            if len(lines) == max_lines:
                 break
     else:
+        # Fallback: city/county/zip
         qs = (
             Locations.objects.filter(business=biz)
             .order_by("location_id")
             .values("city", "county", "zip_code")
-        )[:4]
+        )[:max_lines]
+
         for rec in qs:
             parts = [
                 p
@@ -385,57 +395,237 @@ def download_nursery_pdf(request, business_id: int):
                 if p
             ]
             if parts:
-                location_lines.append(", ".join(parts))
-    while len(location_lines) < 4:
-        location_lines.append("")
+                lines.append(", ".join(parts))
 
-    # Checkbox (email vs USPS) — set as you wish or leave "Off"
-    prefers_email = True
-    checkbox_val = "Yes" if prefers_email else "Off"
+    while len(lines) < max_lines:
+        lines.append("")
 
-    # Today’s date for the certification line
+    return lines, first_loc
+
+
+def _nursery_fieldmap(biz: Businesses):
+    acreage = float(biz.acreage or 0)
+    amount_due_str, _ = _compute_amount_due(acreage)
+    location_lines, first_loc = _extract_location_lines(biz)
+
+    checkbox_val = "Yes"
     today_str = timezone.localdate().strftime("%m/%d/%Y")
 
-    # Map DB → THIS form’s fields
-    field_map = {
-        # Header: put business_id into “License Number”
-        "License Number": str(business_id),
+    return {
+        "License Number": str(biz.pk),
         "current_license_year1": "",
-        # Mailing Information
         "business_name": biz.business_name or "",
         "mailing_address": biz.mo_address or "",
         "main_office_city1": biz.mo_city or "",
         "main_office_state": biz.mo_state or "",
         "main_office_zip1": biz.mo_zip or "",
-        "main_office_county": (location.county if location and location.county else ""),
-        # Contact
+        "main_office_county": (
+            first_loc.county if first_loc and first_loc.county else ""
+        ),
         "main_contact_name": biz.main_contact_name or "",
         "main_office_city2": biz.mo_city or "",
         "main_office_zip2": biz.mo_zip or "",
         "phone_number": biz.main_contact_phone or "",
         "fax": "",
         "main_contact_email": biz.main_contact_email or "",
-        # Field locations (4 lines on this form)
         "field_location1": location_lines[0],
         "field_location2": location_lines[1],
         "field_location3": location_lines[2],
         "field_location4": location_lines[3],
-        # Fees
         "acreage": f"{acreage:g}",
         "amount_due": amount_due_str,
-        "Amt": amount_due_str,  # mirror into bottom box if desired
-        # Checkbox + date
+        "Amt": amount_due_str,
         "Check Box17": checkbox_val,
         "Date": today_str,
-        # Bottom admin box
         "Lic Year": "",
         "Date Recd": "",
         "Check": "",
     }
 
-    filled = _fill_pdf(str(TEMPLATE_PATH), field_map)
-    resp = HttpResponse(filled, content_type="application/pdf")
-    resp["Content-Disposition"] = (
-        f'attachment; filename="nursery_renewal_{business_id}.pdf"'
+
+# ============================================================
+# DEALER FIELDMAP
+# ============================================================
+
+
+def _dealer_fieldmap(biz: Businesses):
+    return {
+        "business_name": biz.business_name,
+        "mailing_address": biz.mo_address,
+        "main_office_city": biz.mo_city,
+        "main_office_state": biz.mo_state,
+        "main_office_zip": biz.mo_zip,
+        "main_contact_name": biz.main_contact_name or "",
+        "main_contact_phone": biz.main_contact_phone or "",
+        "fax": "",
+        "email": biz.main_contact_email or "",
+        "renewal_year1": "",
+        "renewal_year2": "",
+        "current_license_year": "",
+        "email_pref": True,
+        "usps_pref": False,
+    }
+
+
+# ============================================================
+# EML BUILDER
+# ============================================================
+
+
+def _build_eml(
+    to_addr: str, subject: str, body: str, pdf_bytes: bytes, filename: str
+) -> str:
+    boundary = uuid.uuid4().hex
+    pdf_b64 = base64.b64encode(pdf_bytes).decode("ascii")
+
+    return f"""X-Unsent: 1
+From:
+To: {to_addr}
+Subject: {subject}
+Date: {formatdate(localtime=True)}
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="{boundary}"
+
+--{boundary}
+Content-Type: text/plain; charset="utf-8"
+
+{body}
+
+--{boundary}
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="{filename}"
+Content-Transfer-Encoding: base64
+
+{pdf_b64}
+
+--{boundary}--
+"""
+
+
+LICENSE_TYPES = {
+    "nursery": {
+        "template_path": NURSERY_TEMPLATE_PATH,
+        "template_defaults": {
+            "subject": "Nursery Renewal PDF for {business_name}",
+            "body": 'Attached is the file "{filename}".',
+        },
+        "fieldmap": _nursery_fieldmap,
+    },
+    "dealer": {
+        "template_path": DEALER_TEMPLATE_PATH,
+        "template_defaults": {
+            "subject": "Dealer Renewal PDF for {business_name}",
+            "body": 'Attached is the file "{filename}".',
+        },
+        "fieldmap": _dealer_fieldmap,
+    },
+}
+
+
+def _get_license_config(kind: str):
+    try:
+        return LICENSE_TYPES[kind]
+    except KeyError:
+        raise Http404(f"Unknown license type: {kind}")
+
+
+def _load_email_template(kind: str):
+    cfg = _get_license_config(kind)
+    return EmailTemplate.objects.get_or_create(
+        name=kind,
+        defaults=cfg["template_defaults"],
     )
+
+
+# ============================================================
+# SHARED PDF/EML GENERATORS
+# ============================================================
+
+
+def generate_pdf(kind: str, biz: Businesses):
+    cfg = _get_license_config(kind)
+    field_map = cfg["fieldmap"](biz)
+    pdf_bytes = _fill_pdf(str(cfg["template_path"]), field_map)
+    filename = f"{kind} renewal - {biz.business_name}.pdf"
+    return pdf_bytes, filename
+
+
+def preview_pdf(request, kind: str, business_id: int):
+    biz = get_object_or_404(Businesses, pk=business_id)
+    pdf_bytes, filename = generate_pdf(kind, biz)
+
+    resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+    resp["Content-Disposition"] = f'inline; filename="{filename}"'
+    resp["Content-Length"] = len(pdf_bytes)
     return resp
+
+
+def download_pdf(request, kind: str, business_id: int):
+    biz = get_object_or_404(Businesses, pk=business_id)
+    pdf_bytes, filename = generate_pdf(kind, biz)
+
+    resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+    resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return resp
+
+
+def download_eml(request, kind: str, business_id: int):
+    biz = get_object_or_404(Businesses, pk=business_id)
+
+    tmpl, _ = _load_email_template(kind)
+    pdf_bytes, filename = generate_pdf(kind, biz)
+
+    subject = tmpl.subject.format(business_name=biz.business_name)
+    body = tmpl.body.format(
+        business_name=biz.business_name,
+        filename=filename,
+    )
+
+    eml_body = _build_eml(
+        to_addr=biz.main_contact_email or "",
+        subject=subject,
+        body=body,
+        pdf_bytes=pdf_bytes,
+        filename=filename,
+    )
+
+    resp = HttpResponse(eml_body, content_type="message/rfc822")
+    resp["Content-Disposition"] = f'attachment; filename="{filename}.eml"'
+    return resp
+
+
+# ============================================================
+# SHARED GENERATE PAGES (nursery & dealer)
+# ============================================================
+
+
+def generate_page(request, kind: str, template_name: str):
+    tmpl, _ = _load_email_template(kind)
+
+    if request.method == "POST":
+        tmpl.subject = request.POST.get("subject", "")
+        tmpl.body = request.POST.get("body", "")
+        tmpl.save()
+        messages.success(request, "Email template updated.")
+
+    businesses = Businesses.objects.order_by(
+        F("wants_email_renewal").desc(nulls_last=True),
+        "business_name",
+    )
+
+    return render(
+        request,
+        template_name,
+        {
+            "businesses": businesses,
+            "template": tmpl,
+        },
+    )
+
+
+def nursery_generate(request):
+    return generate_page(request, "nursery", "main/nursery_generate/index.html")
+
+
+def dealer_generate(request):
+    return generate_page(request, "dealer", "main/dealer_generate/index.html")
