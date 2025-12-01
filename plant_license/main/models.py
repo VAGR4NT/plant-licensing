@@ -357,4 +357,3 @@ class Suppliers(models.Model):
     class Meta:
         managed = False
         db_table = "suppliers"
-
