@@ -500,3 +500,6 @@ def export_table_as_xlsx(request):
     workbook.save(response)
 
     return response
+
+
+
