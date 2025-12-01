@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, Http404
 from django.urls import reverse
 from django import forms
+import csv
 from django.contrib.contenttypes.models import ContentType
 from django.forms import modelform_factory
 from django.db import connection
@@ -22,6 +23,9 @@ from io import BytesIO
 from pathlib import Path
 from django.conf import settings
 from django.utils import timezone
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Protection, PatternFill
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import NameObject, BooleanObject, DictionaryObject
@@ -518,86 +522,99 @@ def preview_pdf(request, kind: str, business_id: int):
     return resp
 
 
-def download_pdf(request, kind: str, business_id: int):
-    biz = get_object_or_404(Businesses, pk=business_id)
-    pdf_bytes, filename = generate_pdf(kind, biz)
+def export_table_as_csv(request):
 
-    resp = HttpResponse(pdf_bytes, content_type="application/pdf")
-    resp["Content-Disposition"] = f'attachment; filename="{filename}"'
-    return resp
-
-
-def download_eml(request, kind: str, business_id: int):
-    biz = get_object_or_404(Businesses, pk=business_id)
-
-    tmpl, _ = _load_email_template(kind)
-    pdf_bytes, filename = generate_pdf(kind, biz)
-
-    subject = tmpl.subject.format(business_name=biz.business_name)
-    body = tmpl.body.format(
-        business_name=biz.business_name,
-        filename=filename,
+    # Create the HttpResponse object with the appropriate CSV header.
+    # This tells the browser to treat the response as a file to be downloaded.
+    response = HttpResponse(
+        content_type='text/csv',
+        headers={'Content-Disposition': 'attachment; filename="data.csv"'},
     )
 
-    eml_body = _build_eml(
-        to_addr=biz.main_contact_email or "",
-        subject=subject,
-        body=body,
-        pdf_bytes=pdf_bytes,
-        filename=filename,
+    # Get all data from your model
+    # This assumes your model is SampleData. Replace with your actual model.
+    queryset = Businesses.objects.all()
+
+    # Check if there is any data to write
+    if not queryset.exists():
+        response.write("No data found.")
+        return response
+
+    # Get the model's field names
+    # We use _meta.fields to get all field objects
+    # and then get the name for each field.
+    field_names = [field.name for field in Businesses._meta.fields]
+
+    # Create a CSV writer object using the response as the file
+    writer = csv.writer(response)
+
+    # Write the header row
+    writer.writerow(field_names)
+
+    # Iterate over the queryset and write each row to the CSV
+    for obj in queryset:
+        # Create a list of values for the current object
+        row = [getattr(obj, field) for field in field_names]
+        writer.writerow(row)
+
+    return response
+
+
+def export_table_as_xlsx(request):
+    # 1. Create a new Workbook and get the active worksheet
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Business Data" 
+
+    PROTECTION_PASSWORD = 'LockHeader'
+
+    # 2. Configure the HTTP Response for XLSX
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': 'attachment; filename="data_protected.xlsx"'},
     )
 
-    resp = HttpResponse(eml_body, content_type="message/rfc822")
-    resp["Content-Disposition"] = f'attachment; filename="{filename}.eml"'
-    return resp
+    # 3. Get all data and field names
+    queryset = Businesses.objects.all()
+    if not queryset.exists():
+        pass # Handle empty queryset as before
+
+    field_names = [field.name for field in Businesses._meta.fields]
+    num_columns = len(field_names)
+
+    # 4. Write the header row (This row will remain locked by default)
+    worksheet.append(field_names)
+
+    # 5. Write data rows AND UNLOCK the data cells
+    
+    # We start iterating from row 2 (index 1) for data
+    row_num = 2 
+    for obj in queryset:
+        row_data = [getattr(obj, field) for field in field_names]
+        worksheet.append(row_data)
+
+        # Unlock all cells in the current data row (row_num)
+        for col_index in range(1, num_columns + 1):
+            col_letter = get_column_letter(col_index)
+            cell = worksheet[f'{col_letter}{row_num}']
+            
+            # Key Step 1: Set the protection to 'unlocked'
+            cell.protection = Protection(locked=False)
+            
+        
+        row_num += 1
 
 
-# ============================================================
-# SHARED GENERATE PAGES (nursery & dealer)
-# ============================================================
+    worksheet.protection.sheet = True 
+    worksheet.protection.password = PROTECTION_PASSWORD
+    
+    # You can configure what the user is allowed to do while the sheet is protected
+    worksheet.protection.sort = True        
+    worksheet.protection.autofilter = True  
+    worksheet.protection.insertRows = True  
+    worksheet.protection.insertColumns = True
 
+    # 7. Save the workbook to the HttpResponse file-like object
+    workbook.save(response)
 
-def generate_page(request, kind: str, template_name: str):
-    tmpl, _ = _load_email_template(kind)
-
-    # --- Handle email template save ---
-    if request.method == "POST":
-        tmpl.subject = request.POST.get("subject", "")
-        tmpl.body = request.POST.get("body", "")
-        tmpl.save()
-        messages.success(request, "Email template updated.")
-
-    # --- Ordering toggle (must run for both GET and POST) ---
-    reverse_order = request.GET.get("reverse", "0") == "1"
-
-    if reverse_order:
-        # reversed: False first, then True
-        businesses = Businesses.objects.order_by(
-            F("wants_email_renewal").asc(nulls_last=True),
-            "business_name",
-        )
-    else:
-        # normal: True first, then False
-        businesses = Businesses.objects.order_by(
-            F("wants_email_renewal").desc(nulls_last=True),
-            "business_name",
-        )
-
-    # --- Render page ---
-    return render(
-        request,
-        template_name,
-        {
-            "businesses": businesses,
-            "template": tmpl,
-            "reverse_order": reverse_order,
-        },
-    )
-
-
-def nursery_generate(request):
-    return generate_page(request, "nursery", "main/nursery_generate/index.html")
-
-
-def dealer_generate(request):
-    return generate_page(request, "dealer", "main/dealer_generate/index.html")
+    return response

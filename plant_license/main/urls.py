@@ -2,6 +2,9 @@ from django.urls import path
 from django.views.generic import RedirectView
 from django.contrib.auth import views as auth_views
 from . import views
+from .views import download_nursery_pdf
+from .views import export_table_as_csv
+from .views import export_table_as_xlsx
 
 urlpatterns = [
     # Root redirect → /login/
@@ -39,4 +42,6 @@ urlpatterns = [
     path(
         "<str:kind>/<int:business_id>/email/", views.download_eml, name="download_eml"
     ),
+    path('export_table_csv/', export_table_as_csv, name='export_table_csv'),
+    path('export_table_xlsx/', export_table_as_xlsx, name='export_table_xlsx'),
 ]
