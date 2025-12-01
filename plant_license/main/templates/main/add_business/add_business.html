@@ -1,0 +1,83 @@
+{% extends "main/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block page_css %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+      
+    <style>
+        /* 1. Page & Card Background */
+        body { background-color: #f0f2f5; }
+
+        .form-card {
+            background: #fff;
+            padding: 35px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #dee2e6;
+            max-width: 950px; /* Wide enough for 3 cols */
+            margin: 40px auto;
+        }
+
+        /* 2. Scrolling Checkbox List (For Nursery Form) */
+        .scrolling-checkbox-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ced4da;
+            padding: 10px;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+
+        /* 3. Make Checkboxes inside the lists look cleaner */
+        .scrolling-checkbox-list .form-check {
+            padding-bottom: 5px;
+        }
+
+        /* 4. Submit Button */
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background-color: #0d6efd; /* Bootstrap Blue */
+            color: white;
+            font-weight: 600;
+            border: none;
+            border-radius: 4px;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+        .btn-submit:hover { background-color: #0b5ed7; }
+
+        /* 5. Select2 Cleanup */
+        .select2-container .select2-selection--single,
+        .select2-container .select2-selection--multiple {
+            border: 1px solid #ced4da !important;
+            min-height: 38px !important;
+            border-radius: 0.25rem !important;
+        }
+    </style>
+   
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    
+    <div class="form-body">
+        <h2 style="margin-top: 0;">Details</h2>
+        
+        <form method="post">
+            {% csrf_token %}
+
+            {% crispy form %}
+
+            <button type="submit" class="btn-submit" style="margin-top: 20px;">Save & Continue</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.full.min.js"></script>
+    {{ form.media.js }}
+{% endblock %}

@@ -11,13 +11,8 @@
 {% block content %}
 <div class="form-container">
     
-    <div class="tab-header">
-        <a class="tab-link {% if current_type == 'Dealer' %}active{% endif %}" href="?type=Dealer">Register Dealer</a>
-        <a class="tab-link {% if current_type == 'Nursery' %}active{% endif %}" href="?type=Nursery">Register Nursery</a>
-    </div>
-
     <div class="form-body">
-        <h2 style="margin-top: 0;">{{ current_type }} Details</h2>
+        <h2 style="margin-top: 0;">Details</h2>
         
         <form method="post">
             {% csrf_token %}

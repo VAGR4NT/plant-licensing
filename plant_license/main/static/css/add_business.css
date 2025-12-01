@@ -1,0 +1,192 @@
+<style>
+        /* --- 1. General Page & Card Styling --- */
+        body {
+            background-color: #f4f6f9;
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #333;
+        }
+        .form-container {
+            max-width: 900px; /* Slightly wider to accommodate 3-col rows */
+            margin: 40px auto;
+            padding: 0 15px;
+        }
+        .form-body {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #e1e1e1;
+        }
+
+        /* --- 2. Typography & Section Titles --- */
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- 3. The Grid System (Matching your Layout) --- */
+        
+        /* Default behavior for 'form-row' is a 2-column grid */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px;
+            margin-bottom: 15px;
+            align-items: start; /* Aligns inputs to top if heights differ */
+        }
+
+        /* Override: If you added 'three-col' to the row */
+        .form-row.three-col {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        /* Override: If you added 'full-width' to the row */
+        .form-row.full-width {
+            grid-template-columns: 1fr;
+        }
+
+        /* Responsive: Stack everything on mobile */
+        @media (max-width: 768px) {
+            .form-row, .form-row.three-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* --- 4. Input Styling --- */
+        /* Target standard inputs */
+        .textinput, .emailinput, .numberinput, .select, textarea, input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 15px;
+            color: #495057;
+            background-color: #fff;
+            box-sizing: border-box; /* Ensures padding doesn't break grid */
+            transition: border-color 0.15s ease-in-out;
+        }
+
+        /* Focus state */
+        .textinput:focus, .emailinput:focus, .select:focus, textarea:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+
+        /* Labels */
+        label {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 6px;
+            display: block;
+            color: #555;
+        }
+
+        /* --- 5. Checkbox / Boolean Fields (.flag-item) --- */
+        /* You used css_class='flag-item' for booleans. 
+           We need to fix the alignment so the box is next to the label. */
+        .flag-item .form-group {
+            display: flex;
+            flex-direction: row-reverse; /* Puts label to the right of checkbox */
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 25px; /* Push down to align with text inputs in same row */
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #eee;
+        }
+
+        .flag-item label {
+            margin-bottom: 0;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+
+        .flag-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* --- 6. Select2 Fixes (for your Suppliers field) --- */
+        /* Fix the multi-select container to match other inputs */
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #ced4da !important;
+            border-radius: 5px !important;
+            min-height: 42px !important;
+            padding: 5px !important;
+        }
+        
+        /* Fix the single select container */
+        .select2-container--default .select2-selection--single {
+            height: 42px !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 5px !important;
+            padding-top: 6px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            top: 8px !important;
+        }
+
+        /* --- 7. Submit Button --- */
+        .btn-submit {
+            background-color: #28a745; /* Green for 'Save' */
+            color: white;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            float: right;
+            margin-top: 20px;
+        }
+        .btn-submit:hover {
+            background-color: #218838;
+        }
+
+        .tab-header {
+        display: flex;
+        gap: 15px; /* Space between buttons */
+        margin-bottom: 20px; /* Space between buttons and white card */
+    }
+
+    .tab-link {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #e9ecef; /* Gray background for inactive */
+        color: #6c757d; /* Gray text */
+        text-decoration: none;
+        border-radius: 50px; /* Pill shape */
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+
+    .tab-link:hover {
+        background-color: #dee2e6;
+        color: #495057;
+    }
+
+    /* Active State (Matches your submit button) */
+    .tab-link.active {
+        background-color: #007bff;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 123, 255, 0.25); /* Glow effect */
+
+   }
+
+      .hidden {
+         display:none;
+      
+      }
+    </style>

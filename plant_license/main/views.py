@@ -14,7 +14,7 @@ from .query_builder import (
 import json
 from django.apps import apps
 from django.db.models import ForeignKey, OneToOneField, ManyToManyField
-
+from django.views.generic import CreateView, UpdateView
 from io import BytesIO
 from pathlib import Path
 from django.conf import settings
@@ -23,8 +23,8 @@ from django.utils import timezone
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import NameObject, BooleanObject, DictionaryObject
 
-from .models import Businesses, Locations, Licenses, Suppliers, BusinessSuppliers
-from .forms import BusinessForm, LocationFormSet, LocationLicenseFormSet, LocationForm
+from .models import Businesses, Locations, Licenses, Suppliers, ComplianceAgreements
+from .forms import DealerForm, NurseryForm, LocationForm, ComplianceForm
 from django.db import transaction
 
 def home_view(request):
@@ -166,83 +166,66 @@ def view_db_view(request):
 def generate_forms_view(request):
     return render(request, "main/generate-forms/index.html")
 
-def add_business(request):
-    if request.method == "POST":
-        form = BusinessForm(request.POST)
-        formset = LocationFormSet(request.POST)
+class add_business(CreateView):
+    model = Businesses
+    template_name = 'main/add_business/index.html'
 
-        try:
-            with transaction.atomic():
-                business = form.save()
+    def get_form_class(self):
+        form_type = self.request.GET.get('type', 'Dealer')
 
-                formset.instance = business
-                locations = formset.save()
-                
-                if locations:
-                    location_pks = [loc.pk for loc in locations]
+        if form_type == 'Nursery':
+            return NurseryForm
+        return DealerForm
 
-                    request.session['pending_location_pks'] = location_pks
-                    return redirect('complete_licenses', location_pks[0])
-                
-                else:
-                    return redirect("view_db/")
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-        except Exception as e:
-            form.add_error(None, f"{e}")
+        context['current_type'] = self.request.GET.get('type', 'Dealer')
+        return context
 
-    else:
-        form = BusinessForm()
-        formset = LocationFormSet()
-
-    context = {
-        'form' : form,
-        'location_formset' : formset,
-    }
-
-    return render(request, "main/add_business/index.html", context)
-
-def complete_licenses(request, pk):
-    location = get_object_or_404(Locations, pk=pk)
+    def get_success_url(self):
+         return reverse('update', kwargs={'ct': ContentType.objects.get_for_model(self.object._meta.model).id ,'pk':self.object.pk})
     
-    pending_pks = request.session.get('pending_location_pks', [])
-    next_pk = None
+class add_compliance_agreement(CreateView):
+    model = ComplianceAgreements
+    template_name = 'main/add_business/add_location.html'
+
+    def get_form_class(self):
+        return ComplianceForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['parent_id'] = self.kwargs.get('parent_id')
+        return kwargs
+
+    def get_success_url(self):
+        return reverse('update', kwargs={'ct': ContentType.objects.get_for_model(self.object._meta.model).id ,'pk':self.object.pk})
+
+class add_supplier(CreateView):
+    model = Suppliers
+    template_name = 'main/add_business/add_location.html'
+
+    def get_form_class(self):
+        return SuppliersForm
+
+    def get_success_url(self):
+        return reverse('update', kwargs={'ct': ContentType.objects.get_for_model(self.object._meta.model).id ,'pk':self.object.pk})
     
-    try:
-        current_index = pending_pks.index(pk)
-        
-        if current_index + 1 < len(pending_pks):
-            next_pk = pending_pks[current_index + 1]
-    except ValueError:
-        pass
 
-    if request.method == "POST":
-        form = LocationForm(request.POST, instance=location)
-        formset = LocationLicenseFormSet(request.POST, instance=location)
-        
-        if form.is_valid() and formset.is_valid():
-            form.save()
-            formset.save()
-            
-            if 'save_and_next' in request.POST and next_pk:
-                return redirect('complete_licenses', pk=next_pk)
-            
-            if 'pending_location_pks' in request.session:
-                del request.session['pending_location_pks']
-                
-            return redirect('view_db') 
-            
-    else:
-        form = LocationForm(instance=location)
-        formset = LocationLicenseFormSet(instance=location)
+class add_location(CreateView):
+    model = Locations
+    template_name = 'main/add_business/add_location.html'
 
-    context = {
-        'location_form': form,
-        'license_formset': formset,
-        'location': location,
-        'next_location_pk': next_pk  
-    }
+    def get_form_class(self):
+        return LocationForm
 
-    return render(request, 'main/add_business/complete_licenses.html', context)
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['parent_id'] = self.kwargs.get('parent_id')
+        return kwargs
+
+    def get_success_url(self):
+        return reverse('update', kwargs={'ct': ContentType.objects.get_for_model(self.object._meta.model).id ,'pk':self.object.pk})
 
 def update_view(request, ct, pk):
     """
@@ -250,12 +233,9 @@ def update_view(request, ct, pk):
     and list its related "child" objects.
     """
     model_class = ContentType.objects.get(id=ct).model_class()
-
     master_object = get_object_or_404(model_class, pk=pk)
-
     local_field_names = [field.name for field in model_class._meta.fields if not field.is_relation]
     DynamicModelForm = modelform_factory(model_class, fields=local_field_names) 
-
 
     if request.method == 'POST':
         if 'delete' in request.POST:
@@ -273,45 +253,20 @@ def update_view(request, ct, pk):
 
     related_sections = {}
 
-    all_models = apps.get_models()
+    all_related_fields = model_class._meta.get_fields(include_hidden=False)
 
-    for other_model in all_models:
-        if other_model == model_class or getattr(
-            other_model, "is_through_table", False
-        ):
-            continue
+    for field in all_related_fields:
+        if field.is_relation and (field.one_to_many):
+            accessor_name = field.get_accessor_name()
+            if not accessor_name or not hasattr(master_object, accessor_name):
+                continue
 
-        for field in other_model._meta.get_fields():
-            # Check if this field is a ForeignKey pointing to our 'model'
-            if (
-                isinstance(field, (ForeignKey, ManyToManyField))
-                and field.related_model == model_class
-            ):
-                if (
-                    getattr(field, "through", None)
-                    and not field.remote_field.through._meta.auto_created
-                ):
-                    continue
-
-                accessor_name = field.remote_field.get_accessor_name()
-
-                if not accessor_name or not hasattr(master_object, accessor_name):
-                    continue
-
-                queryset = getattr(master_object, accessor_name).all()
-
-                related_sections[other_model._meta.verbose_name.title()] = {
-                    'items': queryset,
-                    'model': ContentType.objects.get_for_model(other_model).id
-                }
-
-    for field in model_class._meta.get_fields():
-        if isinstance(field, ManyToManyField):
-            accessor_name = field.name
             queryset = getattr(master_object, accessor_name).all()
-            related_sections[field.related_model._meta.verbose_name.title()] = {
+            related_model = field.related_model
+            related_sections[related_model._meta.verbose_name.title()] = {
                 'items': queryset,
-                'model': ContentType.objects.get_for_model(field.related_model).id
+                'model': ContentType.objects.get_for_model(related_model).id,
+                'add_url': related_model.get_add_url() if hasattr(related_model, 'get_add_url') else None 
             }
 
     context = {
@@ -321,9 +276,20 @@ def update_view(request, ct, pk):
         "master_model_name": model_class._meta.model_name,
     }
 
+    if hasattr(master_object, 'get_parent'):
+        context["parent_object"] = master_object.get_parent()
+        context["parent_ct"] = ContentType.objects.get_for_model(master_object.get_parent()).id
+    else: 
+        context["parent_object"] = None
+        context["parent_ct"] = None 
+
+    if hasattr(master_object, 'get_add_url'):
+        context["add_url"] = master_object.get_add_url()
+    else:
+        context["add_url"] = None
+
+
     return render(request, "main/update/index.html", context)
-
-
 
 def user_info_view(request):
     return render(request, "main/user-info/index.html")

@@ -16,36 +16,73 @@
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha26-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 
+    {{ form.media.js }}
+    {{ location_formset.media.js }}
+
+
 <form method="post">
     {% csrf_token %}
+   
+    {{ form.non_field_errors }}
+
+    <h2>Business Information</h2>
+    <p>
+        {{ form.business_name.label_tag }}
+        {{ form.business_name }}
+        {{ form.business_name.errors }}
+    </p>
+    <p>
+        {{ form.main_contact_name.label_tag }}
+        {{ form.main_contact_name }}
+        {{ form.main_contact_name.errors }}
+    </p>
+    <p>
+        {{ form.main_contact_email.label_tag }}
+        {{ form.main_contact_email }}
+        {{ form.main_contact_email.errors }}
+    </p>
+    <p>
+        {{ form.main_contact_phone.label_tag }}
+        {{ form.main_contact_phone }}
+        {{ form.main_contact_phone.errors }}
+    </p>
+
+    <hr>
     
-    <h2>Location: {{ location.address }}</h2>
-    {{ location_form.as_p }}
+    <h2>Suppliers</h2>
+    <p>
+        {{ form.suppliers }} 
+        {{ form.suppliers.errors }}
+    </p>
     
     <hr>
     
-    <h2>Licenses</h2>
-    {{ license_formset.management_form }}
-    {% for form in license_formset %}
-        {{ form.as_p }}
-        <hr>
-    {% endfor %}
+    <h2>Locations</h2>
     
-    {% if next_location_pk %}
-        <button type="submit" name="save_and_next" value="1">
-            Save & Next Location
-        </button>
-        <button type="submit" name="save_and_finish">
-            Save & Finish
-        </button>
-    {% else %}
-        <button type="submit" name="save_and_finish">
-            Save & Finish
-        </button>
-    {% endif %}
-    
+    {{ location_formset.management_form }}
+    {{ location_formset.non_field_errors }}
+
+    <div id="location-forms-container">
+        {% for loc_form in location_formset %}
+            <div class="location-form">
+                {{ loc_form.as_p }}
+
+                <hr>
+            </div>
+        {% endfor %}
+    </div>
+
+    <button type="button" id="add-location-btn">Add Another Location</button>
+    <button type="button" id="remove-location-btn">Remove Last Location</button>
+    <button type="submit">Save Business</button>
 </form>
 
+<div id="empty-location-form" style="display: none;">
+    <div class="location-form">
+        {{ location_formset.empty_form.as_p }}
+        <hr>
+    </div>
+</div>
 {% endblock %}
 
 {% block page_js %}
