@@ -1,0 +1,38 @@
+{% extends "main/base.html" %} {% load static %} {% block title %} Direct
+Downloads {% endblock %} {% block content %}
+
+<h1>Direct Downloads</h1>
+<a href="{% url 'dealer_generate' %}" id="dealer-btn" class="btn"
+  >Generate Dealer PDFs</a
+>
+
+<div class="datatable-container">
+  <table class="datatable">
+    <thead>
+      <tr>
+        <th>Table</th>
+        <th>CSV Download</th>
+        <th>Formatted Excel Download</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in businesses %}
+      <tr>
+        <td>
+          <a class="btn" href="{% url 'download_nursery_pdf' b.business_id %}">
+            Download PDF
+          </a>
+        </td>
+        <td>{{ b.business_name }}</td>
+        <td>{{ b.mo_city }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3">No businesses found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% endblock %}
+</div>
