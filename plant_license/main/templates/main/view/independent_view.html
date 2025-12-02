@@ -1,0 +1,47 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block page_css %}
+  <link rel="stylesheet" href="{% static 'css/specific-view.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+{{ table_fields|json_script:"table-fields-data" }}
+
+<section id="results" class="results-section">
+   <h2>{{ model_name }}</h2>
+  {% if error_message %}
+    <p style="color: red;">{{ error_message }}</p>
+   {% elif rows %}
+    <div class="datatable-container">
+      <table class="datatable">
+        <thead>
+          <tr>
+            <th>Actions</th>
+            {% for header in headers %}
+              <th>{{ header }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>
+               <a class="btn" href="{% url 'update' model_id row.id %}">Edit</a>
+            </td>
+            {% for cell in row.data %}
+              <td>{{ cell }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p>None Found</p>
+  {% endif %}
+</section>
+
+{% endblock %}
+

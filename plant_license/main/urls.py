@@ -35,6 +35,7 @@ urlpatterns = [
     path('supplier-autocomplete/', SupplierAutocomplete.as_view(), name='supplier-autocomplete'),
     path("user-info/", views.user_info_view, name="user_info"),
     path("specific_view/", views.specific_view, name="specific_view"),
+    path("independent_view/<int:ct>/", views.independent_view, name="independent_view"),
     path("account/", views.account_view, name="account"),
     # nursery and dealer pdf/eml generation
     path("nursery_generate/", views.nursery_generate, name="nursery_generate"),

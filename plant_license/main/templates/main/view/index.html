@@ -18,7 +18,7 @@
 
    {% for model_name, model_object in independent_models.items %}
       <li>
-         <a href="{% url 'specific_view' %}" class="btn">{{model_name}}</a>
+         <a href="{% url 'independent_view' ct=model_object %}" class="btn">{{model_name}}</a>
       </li>
    {% endfor %}
 </ul>

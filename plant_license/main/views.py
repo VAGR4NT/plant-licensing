@@ -29,19 +29,13 @@ from pypdf.generic import NameObject, BooleanObject, DictionaryObject
 from .models import Businesses, Locations, Licenses, Suppliers, ComplianceAgreements
 from .forms import DealerForm, NurseryForm, LocationForm, ComplianceForm
 from django.db import transaction
-from .models import Businesses, Locations, Licenses, Suppliers, BusinessSuppliers
+from .models import Businesses, Locations, Licenses, Suppliers
 
 import base64
 import uuid
 from email.utils import formatdate
 
 def home_view(request):
-    total_posts = Suppliers.objects.count()
-
-    context = {
-        "number_of_suppliers": total_posts * 2,
-    }
-
     return render(request, "main/index.html", context)
 
 
@@ -79,54 +73,67 @@ def specific_view(request):
         "checked_columns": request.GET.getlist("columns"),
     }
 
-    search_type = request.GET.get("search_type")
-    if search_type:
-        root_model = MODEL_MAP.get(search_type)
-        if root_model:
-            try:
-                filters = []
-                if request.GET.get("q"):
-                    primary_search_fields = {
-                        "business": "business_name",
-                        "supplier": "suppliers__supplier_name",
-                        "location": "locations__address",
-                    }
-                    search_field = primary_search_fields.get(search_type)
-                    if search_field:
-                        filters.append(
-                            {
-                                "field": search_field,
-                                "operator": "icontains",
-                                "value": request.GET.get("q"),
-                            }
-                        )
+    try:
+        filters = []
+        if request.GET.get("q"):
+            filters.append({
+                    "field": "business_name",
+                    "operator": "icontains",
+                    "value": request.GET.get("q"),
+                    })
 
-                for i in range(1, 6):
-                    field = request.GET.get(f"adv_field_{i}")
-                    op = request.GET.get(f"adv_op_{i}")
-                    val = request.GET.get(f"adv_val_{i}")
-                    if field and op and val:
-                        filters.append({"field": field, "operator": op, "value": val})
+        for i in range(1, 6):
+            field = request.GET.get(f"adv_field_{i}")
+            op = request.GET.get(f"adv_op_{i}")
+            val = request.GET.get(f"adv_val_{i}")
+            if field and op and val:
+                filters.append({"field": field, "operator": op, "value": val})
 
-                select_columns = request.GET.getlist("columns")
-                if not select_columns:
-                    select_columns = (
-                        ["business_name", "mo_city"]
-                        if search_type == "business"
-                        else ["suppliers__supplier_name", "suppliers__city"]
-                    )
+        select_columns = request.GET.getlist("columns")
+        if not select_columns:
+            select_columns = (
+                ["business_name", "mo_city"]
+        )
 
-                queryset = query_builder(Businesses, filters=filters)
-                context["result_count"] = queryset.count()
+        queryset = query_builder(Businesses, filters=filters)
+        context["result_count"] = queryset.count()
 
-                display_data = format_table(queryset, select_columns)
-                context.update(display_data)
+        display_data = format_table(queryset, select_columns)
+        context.update(display_data)
 
-            except ValueError as e:
-                context["error_message"] = f"Error building query: {e}"
+    except ValueError as e:
+          context["error_message"] = f"Error building query: {e}"
 
     return render(request, "main/view/specific_view.html", context)
 
+def independent_view(request, ct):
+
+    model_class = ContentType.objects.get(id=ct).model_class()
+
+    context = {
+        "headers": [],
+        "rows": [],
+        "model_id": ct,
+        "model_name": model_class._meta.verbose_name.title(),
+        "error_message": None,
+    }
+
+    try:
+        filters = []
+        
+        queryset = query_builder(model_class, filters=filters)
+        
+        print(queryset)
+        print(model_class.identifying_fields())
+        
+        display_data = format_table(queryset, model_class.identifying_fields())
+        context.update(display_data)
+        print(context)
+
+    except ValueError as e:
+          context["error_message"] = f"Error building query: {e}"
+
+    return render(request, "main/view/independent_view.html", context)
 
 def direct_access_view(request):
     return render(request, "main/direct-access/index.html")
@@ -163,7 +170,7 @@ def view_db_view(request):
                     break
 
             if is_independent:
-                context["independent_models"][model._meta.verbose_name.title()] = model
+                context["independent_models"][model._meta.verbose_name.title()] = ContentType.objects.get_for_model(model).id
 
     except LookupError:
         context["error"] = "Problem"
@@ -442,6 +449,97 @@ def _nursery_fieldmap(biz: Businesses):
         "Check": "",
     }
 
+def download_nursery_pdf(request, business_id: int):
+    # Get the business row by business_id (this is your “key”)
+    try:
+        biz = Businesses.objects.get(pk=business_id)
+    except Businesses.DoesNotExist:
+        raise Http404("Business not found")
+
+    # Choose a representative location (adjust selection rule if needed)
+    location = Locations.objects.filter(business=biz).order_by("location_id").first()
+
+    # Fees: $40 + $1.50 per acre
+    acreage = float(biz.acreage or 0)
+    amount_due_val = 40.00 + 1.50 * acreage
+    amount_due_str = f"${amount_due_val:,.2f}"
+
+    # Field locations: split notes across up to 4 lines (or synthesize)
+    location_lines = []
+    if location and (location.field_location_notes or "").strip():
+        for line in (location.field_location_notes or "").splitlines():
+            line = line.strip()
+            if line:
+                location_lines.append(line)
+            if len(location_lines) == 4:
+                break
+    else:
+        qs = (
+            Locations.objects.filter(business=biz)
+            .order_by("location_id")
+            .values("city", "county", "zip_code")
+        )[:4]
+        for rec in qs:
+            parts = [
+                p
+                for p in [rec.get("city"), rec.get("county"), rec.get("zip_code")]
+                if p
+            ]
+            if parts:
+                location_lines.append(", ".join(parts))
+    while len(location_lines) < 4:
+        location_lines.append("")
+
+    # Checkbox (email vs USPS) — set as you wish or leave "Off"
+    prefers_email = True
+    checkbox_val = "Yes" if prefers_email else "Off"
+
+    # Today’s date for the certification line
+    today_str = timezone.localdate().strftime("%m/%d/%Y")
+
+    # Map DB → THIS form’s fields
+    field_map = {
+        # Header: put business_id into “License Number”
+        "License Number": str(business_id),
+        "current_license_year1": "",
+        # Mailing Information
+        "business_name": biz.business_name or "",
+        "mailing_address": biz.mo_address or "",
+        "main_office_city1": biz.mo_city or "",
+        "main_office_state": biz.mo_state or "",
+        "main_office_zip1": biz.mo_zip or "",
+        "main_office_county": (location.county if location and location.county else ""),
+        # Contact
+        "main_contact_name": biz.main_contact_name or "",
+        "main_office_city2": biz.mo_city or "",
+        "main_office_zip2": biz.mo_zip or "",
+        "phone_number": biz.main_contact_phone or "",
+        "fax": "",
+        "main_contact_email": biz.main_contact_email or "",
+        # Field locations (4 lines on this form)
+        "field_location1": location_lines[0],
+        "field_location2": location_lines[1],
+        "field_location3": location_lines[2],
+        "field_location4": location_lines[3],
+        # Fees
+        "acreage": f"{acreage:g}",
+        "amount_due": amount_due_str,
+        "Amt": amount_due_str,  # mirror into bottom box if desired
+        # Checkbox + date
+        "Check Box17": checkbox_val,
+        "Date": today_str,
+        # Bottom admin box
+        "Lic Year": "",
+        "Date Recd": "",
+        "Check": "",
+    }
+
+    filled = _fill_pdf(str(TEMPLATE_PATH), field_map)
+    resp = HttpResponse(filled, content_type="application/pdf")
+    resp["Content-Disposition"] = (
+        f'attachment; filename="nursery_renewal_{business_id}.pdf"'
+    )
+    return resp
 
 # ============================================================
 # DEALER FIELDMAP
