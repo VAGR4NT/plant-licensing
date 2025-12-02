@@ -12,6 +12,22 @@ class BusinessTypes(models.Model):
     def __str__(self):
         return self.type_name
 
+    @staticmethod
+    def identifying_fields():
+        return ['type_name']
+
+class EmailTemplate(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    subject = models.CharField(max_length=300) 
+    body = models.TextField()
+
+    def __str__(self):
+        return self.name
+
+    @staticmethod
+    def identifying_fields():
+        return ['name']
+
 class PlantTypes(models.Model):
     plant_type_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
@@ -22,6 +38,10 @@ class PlantTypes(models.Model):
 
     def __str__(self):
         return self.name
+
+    @staticmethod
+    def identifying_fields():
+        return ['name']
 
 
 class SellingSeasons(models.Model):
@@ -35,6 +55,9 @@ class SellingSeasons(models.Model):
     def __str__(self):
         return self.name
 
+    @staticmethod
+    def identifying_fields():
+        return ['name']
 
 class ShippingRegions(models.Model):
     region_id = models.AutoField(primary_key=True)
@@ -46,6 +69,10 @@ class ShippingRegions(models.Model):
 
     def __str__(self):
         return self.name
+
+    @staticmethod
+    def identifying_fields():
+        return ['name']
 
 class Suppliers(models.Model):
     supplier_id = models.AutoField(primary_key=True)
@@ -66,6 +93,10 @@ class Suppliers(models.Model):
 
     def __str__(self):
         return self.supplier_name
+
+    @staticmethod
+    def identifying_fields():
+        return ['supplier_name', 'address', 'city', 'state']
 
 
 class Pests(models.Model):
@@ -93,6 +124,9 @@ class Pests(models.Model):
     def __str__(self):
         return self.common_name
 
+    @staticmethod
+    def identifying_fields():
+        return ['common_name']
 
 class Businesses(models.Model):
     business_id = models.AutoField(primary_key=True)
@@ -146,6 +180,11 @@ class Businesses(models.Model):
     def __str__(self):
         return self.business_name
 
+    @staticmethod
+    def identifying_fields():
+        return ['business_name']
+
+
 
 class Locations(models.Model):
     location_id = models.AutoField(primary_key=True)
@@ -178,6 +217,10 @@ class Locations(models.Model):
         return self.business
 
     @staticmethod
+    def identifying_fields():
+        return ['address', 'city', 'state', 'business__business_name']
+
+    @staticmethod
     def get_add_url():
         return "add_location"
 
@@ -202,6 +245,10 @@ class Licenses(models.Model):
     def __str__(self):
         return f"Lic {self.license_period_end.year} - {self.location}"
 
+    @staticmethod
+    def identifying_fields():
+        return ['location__address', 'licesnse_period_start', 'license_period_end']
+
 
 class ComplianceAgreements(models.Model):
     agreement_id = models.AutoField(primary_key=True)
@@ -222,6 +269,10 @@ class ComplianceAgreements(models.Model):
 
     def __str__(self):
         return self.agreement_number
+
+    @staticmethod
+    def identifying_fields():
+        return ['business__business_name', 'agreement_number']
 
 
 class Inspections(models.Model):
@@ -251,6 +302,10 @@ class Inspections(models.Model):
     def __str__(self):
         return f"{self.inspection_date} - {self.location}"
 
+    @staticmethod
+    def identifying_fields():
+        return ['location__address', 'inspection_date']
+
 
 class InspectionFindings(models.Model):
     finding_id = models.AutoField(primary_key=True)
@@ -266,3 +321,8 @@ class InspectionFindings(models.Model):
 
     def __str__(self):
         return f"{self.pest} found on {self.plant_name}"
+
+    @staticmethod
+    def identifying_fields():
+        return ['plant_name']
+
