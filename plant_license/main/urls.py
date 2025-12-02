@@ -31,7 +31,6 @@ urlpatterns = [
     path("add_compliance_agreements/<int:parent_id>/", views.add_compliance_agreement.as_view(), name="add_compliance_agreement"),
     path("add_supplier/", views.add_supplier.as_view(), name="add_supplier"),
 
-
     path('supplier-autocomplete/', SupplierAutocomplete.as_view(), name='supplier-autocomplete'),
     path("user-info/", views.user_info_view, name="user_info"),
     path("specific_view/", views.specific_view, name="specific_view"),
