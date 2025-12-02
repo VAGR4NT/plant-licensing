@@ -727,3 +727,104 @@ def nursery_generate(request):
 
 def dealer_generate(request):
     return generate_page(request, "dealer", "main/dealer_generate/index.html")
+
+
+def export_table_as_csv(request):
+
+    # Create the HttpResponse object with the appropriate CSV header.
+    # This tells the browser to treat the response as a file to be downloaded.
+    response = HttpResponse(
+        content_type='text/csv',
+        headers={'Content-Disposition': 'attachment; filename="data.csv"'},
+    )
+
+    # Get all data from your model
+    # This assumes your model is SampleData. Replace with your actual model.
+    queryset = Businesses.objects.all()
+
+    # Check if there is any data to write
+    if not queryset.exists():
+        response.write("No data found.")
+        return response
+
+    # Get the model's field names
+    # We use _meta.fields to get all field objects
+    # and then get the name for each field.
+    field_names = [field.name for field in Businesses._meta.fields]
+
+    # Create a CSV writer object using the response as the file
+    writer = csv.writer(response)
+
+    # Write the header row
+    writer.writerow(field_names)
+
+    # Iterate over the queryset and write each row to the CSV
+    for obj in queryset:
+        # Create a list of values for the current object
+        row = [getattr(obj, field) for field in field_names]
+        writer.writerow(row)
+
+    return response
+
+
+def export_table_as_xlsx(request):
+    # 1. Create a new Workbook and get the active worksheet
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Business Data" 
+
+    PROTECTION_PASSWORD = 'LockHeader'
+
+    # 2. Configure the HTTP Response for XLSX
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': 'attachment; filename="data_protected.xlsx"'},
+    )
+
+    # 3. Get all data and field names
+    queryset = Businesses.objects.all()
+    if not queryset.exists():
+        pass # Handle empty queryset as before
+
+    field_names = [field.name for field in Businesses._meta.fields]
+    num_columns = len(field_names)
+
+    # 4. Write the header row (This row will remain locked by default)
+    worksheet.append(field_names)
+
+    # 5. Write data rows AND UNLOCK the data cells
+    
+    # We start iterating from row 2 (index 1) for data
+    row_num = 2 
+    for obj in queryset:
+        row_data = [getattr(obj, field) for field in field_names]
+        worksheet.append(row_data)
+
+        # Unlock all cells in the current data row (row_num)
+        for col_index in range(1, num_columns + 1):
+            col_letter = get_column_letter(col_index)
+            cell = worksheet[f'{col_letter}{row_num}']
+            
+            # Key Step 1: Set the protection to 'unlocked'
+            cell.protection = Protection(locked=False)
+            
+        
+        row_num += 1
+
+
+    worksheet.protection.sheet = True 
+    worksheet.protection.password = PROTECTION_PASSWORD
+    
+    # You can configure what the user is allowed to do while the sheet is protected
+    worksheet.protection.sort = True        
+    worksheet.protection.autofilter = True  
+    worksheet.protection.insertRows = True  
+    worksheet.protection.insertColumns = True
+
+    # 7. Save the workbook to the HttpResponse file-like object
+    workbook.save(response)
+
+    return response
+
+
+
