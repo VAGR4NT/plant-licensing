@@ -22,6 +22,9 @@ from io import BytesIO
 from pathlib import Path
 from django.conf import settings
 from django.utils import timezone
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Protection, PatternFill
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import NameObject, BooleanObject, DictionaryObject
