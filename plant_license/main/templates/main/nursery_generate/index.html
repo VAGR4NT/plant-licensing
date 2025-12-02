@@ -63,6 +63,14 @@
             Download Email (.eml)
         </a>
 
+        <!-- Download Nursery PDF -->
+        <a
+          class="btn secondary"
+          href="{% url 'download_pdf' 'nursery' b.business_id %}"
+          >
+          Download PDF
+        </a>
+      
         <!-- Unified PDF Preview -->
         <button 
             class="btn preview-btn"

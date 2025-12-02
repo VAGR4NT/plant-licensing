@@ -63,6 +63,13 @@
             Download Email (.eml)
         </a>
 
+        <!-- Download Dealer PDF -->
+        <a
+          class="btn secondary"
+          href="{% url 'download_pdf' 'dealer' b.business_id %}"
+          >
+          Download PDF
+        </a>
         <!-- Unified Dealer PDF Preview -->
         <button 
             class="btn preview-btn"
