@@ -157,6 +157,8 @@ def view_db_view(request):
         "AuthUser",
         "AuthGroup",
         "Businesses",
+        "EmailTemplate",
+        "SellingSeasons"
     ]
 
     try:
