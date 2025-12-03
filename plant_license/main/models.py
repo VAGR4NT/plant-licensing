@@ -89,7 +89,7 @@ class Suppliers(models.Model):
 
     @staticmethod
     def get_add_url():
-        return "add_location"
+        return "add_supplier"
 
     def __str__(self):
         return self.supplier_name

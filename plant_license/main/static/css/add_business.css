@@ -189,4 +189,101 @@
          display:none;
       
       }
+
+   .checkbox-grid ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex; /* Enables flexbox layout */
+    flex-wrap: wrap; /* Allows items to wrap to the next line */
+    gap: 5px; /* Optional: Keep a small gap between tiles */
+}
+
+/* 2. Make the list items grow to fill space */
+.checkbox-grid li {
+    flex: 1 0 auto; /* Grow: 1, Shrink: 0, Basis: Auto */
+    /* This ensures every item expands to fill the available row width */
+}
+
+/* 3. Style the label (the visible "button") */
+.checkbox-grid label {
+    display: block;     /* Important: Ensure label fills the <li> */
+    width: 100%;        /* Ensure label takes full width of the parent <li> */
+    padding: 10px;      /* Increased padding for a better click area */
+    background-color: #f0f0f0; 
+    border: 1px solid #ccc;
+    
+    /* YOUR REQUESTS: */
+    border-radius: 0;   /* Removes rounded corners */
+    text-align: center; /* Centers the text inside the box */
+    
+    cursor: pointer;
+    font-size: 0.9em;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+/* Hover effect */
+.checkbox-grid label:hover {
+    background-color: #e0e0e0;
+}
+
+/* 4. Hide the actual input */
+.checkbox-grid input[type="checkbox"] {
+    display: none; 
+    /* Or use visibility: hidden; position: absolute; if you need accessibility focus */
+}
+
+/* 5. Checked State */
+.checkbox-grid input[type="checkbox"]:checked + label {
+    background-color: #2e7d32;
+    color: white;
+    border-color: #2e7d32;
+}
+
+/* 1. Reset the list to stack vertically */
+.list-group-checkboxes ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* 2. The Clickable Row */
+.list-group-checkboxes label {
+    display: block;        /* Forces it to take up the full row */
+    width: 100%;           /* Fills horizontal space */
+    padding: 12px 15px;    /* Nice breathing room */
+
+    border-bottom: 1px solid #eee; /* A subtle separator line only */
+    border-radius: 0;      /* Square corners */
+    margin: 0;             /* Remove spacing between items */
+
+    background-color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+/* Remove border from the very last item so it sits flush with the container bottom */
+.list-group-checkboxes li:last-child label {
+    border-bottom: none;
+}
+
+/* Hover Effect */
+.list-group-checkboxes label:hover {
+    background-color: #f1f1f1;
+}
+
+/* 3. CHECKED State - Highlight the whole row */
+.list-group-checkboxes input[type="checkbox"]:checked + label {
+    background-color: #e8f5e9; /* Very light green background */
+    color: #2e7d32;            /* Dark green text */
+    font-weight: bold;
+    border-left: 4px solid #2e7d32; /* Optional: A colored bar on the left to show selection clearly */
+}
+
+/* Hide the actual checkbox square */
+.list-group-checkboxes input[type="checkbox"] {
+    display: none;
+}
+
     </style>

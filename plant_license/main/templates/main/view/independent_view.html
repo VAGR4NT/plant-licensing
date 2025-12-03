@@ -11,6 +11,22 @@
 
 <section id="results" class="results-section">
    <h2>{{ model_name }}</h2>
+
+   <div class="action-bar">
+    <input type="text" id="localSearchInput" 
+           placeholder="Type to find..." 
+           onkeyup="if(event.key === 'Enter') findRow()">
+    
+    <button class="btn btn-search" onclick="findRow()">
+        Find
+    </button>
+
+    {% if add_url %}
+    <a href="{% url add_url %}?popup=1" onclick="return showAddPopup(this);" class="btn btn-add" title="Add New Supplier">+ Add</a>
+    {% endif %}
+
+</div>
+
   {% if error_message %}
     <p style="color: red;">{{ error_message }}</p>
    {% elif rows %}
@@ -43,5 +59,68 @@
   {% endif %}
 </section>
 
+<script>
+function findRow() {
+    // 1. Get the search text
+    let input = document.getElementById('localSearchInput').value.toLowerCase();
+    if (!input) return;
+
+    // 2. Get all table rows
+    // Adjust '.datatable tbody tr' if your table class is different
+    let rows = document.querySelectorAll('.datatable tbody tr');
+    let found = false;
+
+    // 3. Loop through rows to find a match
+    for (let row of rows) {
+        // We look at the row's text content
+        if (row.innerText.toLowerCase().includes(input)) {
+            
+            // A. Scroll the row into the center of the screen
+            row.scrollIntoView({ behavior: "smooth", block: "center" });
+            
+            // B. Add a flash effect so the user sees which one it is
+            row.classList.remove('highlight-row'); // Reset if already there
+            void row.offsetWidth; // Trigger reflow to restart animation
+            row.classList.add('highlight-row');
+            
+            found = true;
+            break; // Stop after first match
+        }
+    }
+
+    if (!found) {
+        alert("No match found on this page.");
+    }
+}
+</script>
+
+<script type="text/javascript">
+    function showAddPopup(triggeringLink) {
+        var name = triggeringLink.id.replace(/^add_/, '');
+        href = triggeringLink.href;
+        // Open a small window
+        var win = window.open(href, name, 'height=500,width=800,resizable=yes,scrollbars=yes');
+        win.focus();
+        return false;
+    }
+
+    function closePopup(win, newID, newRepr) {
+        // This function is called by the POPUP when it finishes.
+        // 1. Select the supplier dropdown (adjust selector ID to match your field)
+        var select = document.getElementById('id_supplier');
+        
+        // 2. Create the new option
+        var option = document.createElement('option');
+        option.value = newID;
+        option.text = newRepr;
+        option.selected = true;
+
+        // 3. Add it to the dropdown
+        select.add(option);
+        
+        // 4. Close the popup
+        win.close();
+    }
+</script>
 {% endblock %}
 

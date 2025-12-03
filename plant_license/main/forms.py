@@ -65,8 +65,8 @@ class BaseBusinessForm(forms.ModelForm):
                 Div('wants_email_renewal', css_class='flag-item'),
                 Div('wants_email_license', css_class='flag-item'),
                 Div('wants_labels', css_class='flag-item'),
-                css_class='form-row three-col',
-                style="align-items: center; margin-top: 10px;"
+                css_class='checkbox-grid',
+                style="align-items: center; margin-top: 10px; border: 1px; border: 1px solid #ccc; padding: 10px;"
             ),
             Div(
                 'num_labels',
@@ -108,10 +108,6 @@ class DealerForm(BaseBusinessForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['entity_type'].initial = 'Dealer'
-        # Dealer form just uses the Base layout.
-        # If you wanted to hide 'entity_type' from the UI, you could do:
-        # self.fields['entity_type'].widget = forms.HiddenInput()
-
 
 class NurseryForm(BaseBusinessForm):
     business_types = forms.ModelMultipleChoiceField(
@@ -163,15 +159,15 @@ class NurseryForm(BaseBusinessForm):
             Div(
                 Div(
                     HTML("<strong>Business Types</strong>"),
-                    Div('business_types', style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;"),
+                    Div('business_types', css_class='checkbox-grid', style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;"),
                 ),
                 Div(
                     HTML("<strong>Plants Sold</strong>"),
-                    Div('plant_types', style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;"),
+                    Div('plant_types', css_class='checkbox-grid', style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;"),
                 ),
                 Div(
                     HTML("<strong>Selling Seasons</strong>"),
-                    Div('selling_seasons', style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;"),
+                    Div('selling_seasons', css_class='checkbox-grid', style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;"),
                 ),
                 css_class='form-row three-col'
             )
@@ -291,7 +287,9 @@ class SupplierForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.disable_csrf = True
-        
+       
+        self.helper.form_action = ""
+
         self.helper.layout = Layout(
             
             HTML("<div class='section-title'>Supplier</div>"),

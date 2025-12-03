@@ -32,7 +32,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.generic import NameObject, BooleanObject, DictionaryObject
 
 from .models import Businesses, Locations, Licenses, Suppliers, ComplianceAgreements
-from .forms import DealerForm, NurseryForm, LocationForm, ComplianceForm
+from .forms import DealerForm, NurseryForm, LocationForm, ComplianceForm, SupplierForm
 from django.db import transaction
 from .models import Businesses, Locations, Licenses, Suppliers
 
@@ -60,10 +60,11 @@ def specific_view(request):
         path_prefix = info["prefix"]
 
         for field in model_class._meta.fields:
-            clean_label = field.name.replace("_", " ").title()
-            fields_for_group.append(
-                {"name": f"{path_prefix}{field.name}", "label": clean_label}
-            )
+            if  not isinstance(field, (ForeignKey, OneToOneField)):
+                clean_label = field.name.replace("_", " ").title()
+                fields_for_group.append(
+                    {"name": f"{path_prefix}{field.name}", "label": clean_label}
+                )
         table_fields_data[table] = fields_for_group
 
     context = {
@@ -120,6 +121,7 @@ def independent_view(request, ct):
         "rows": [],
         "model_id": ct,
         "model_name": model_class._meta.verbose_name.title(),
+        'add_url': model_class.get_add_url() if hasattr(model_class, 'get_add_url') else None,
         "error_message": None,
     }
 
@@ -225,13 +227,23 @@ class add_compliance_agreement(CreateView):
 
 class add_supplier(CreateView):
     model = Suppliers
-    template_name = 'main/add_business/add_location.html'
+    template_name = 'main/add_business/add_independent.html'
 
     def get_form_class(self):
-        return SuppliersForm
+        return SupplierForm
 
     def get_success_url(self):
         return reverse('update', kwargs={'ct': ContentType.objects.get_for_model(self.object._meta.model).id ,'pk':self.object.pk})
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        
+        if 'popup' in self.request.GET:
+            return render(self.request, 'main/add_business/close_popup.html', {
+                'object': self.object
+            })
+            
+        return response
     
 
 class add_location(CreateView):

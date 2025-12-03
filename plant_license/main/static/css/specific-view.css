@@ -368,3 +368,65 @@ a.btn:hover {
     font-size: 0.9rem;
   }
 }
+
+.action-bar {
+    display: flex;
+    gap: 0; /* We join them together visually */
+    max-width: 600px;
+    margin: 0 auto 20px auto; /* Center it */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden; /* Ensures child corners don't poke out */
+}
+
+/* The Text Input */
+.action-bar input {
+    flex-grow: 1; /* Takes all available empty space */
+    border: 1px solid #ccc;
+    border-right: none; /* Merge with button */
+    padding: 10px 15px;
+    font-size: 1rem;
+    outline: none;
+}
+
+/* The 'Find' Button */
+.btn-search {
+    border-radius: 0; /* Square edges to merge with input */
+    border: 1px solid #ccc;
+    border-left: none;
+    background-color: #f8f9fa;
+    color: #333;
+    padding: 0 20px;
+    cursor: pointer;
+}
+
+.btn-search:hover {
+    background-color: #e2e6ea;
+}
+
+/* The 'Add' Button */
+.btn-add {
+    background-color: #2e7d32; /* Your nice Green */
+    color: white;
+    text-decoration: none;
+    padding: 10px 25px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    border: 1px solid #2e7d32;
+    transition: background 0.2s;
+}
+
+.btn-add:hover {
+    background-color: #1b5e20; /* Darker green on hover */
+}
+
+/* The Highlight Animation */
+@keyframes flash-highlight {
+    0% { background-color: #fff3cd; } /* Yellow */
+    100% { background-color: transparent; }
+}
+
+.highlight-row {
+    animation: flash-highlight 2s ease-out;
+}
