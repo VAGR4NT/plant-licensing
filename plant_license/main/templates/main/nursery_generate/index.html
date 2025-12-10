@@ -4,13 +4,14 @@
 {% block title %} Nursery License Renewal {% endblock %}
 
 {% block page_css %}
-  <link rel="stylesheet" href="{% static 'css/nursery_generate.css' %}">
+  <link rel="stylesheet" href="{% static 'main/css/nursery_generate.css' %}">
 {% endblock %}
 
 {% block content %}
 
 <h1>Nursery License Renewal</h1>
 <a href="{% url 'dealer_generate' %}" id="dealer-btn" class="btn">Generate Dealer Licenses</a>
+<a href="{% url 'pdf_update' %}" id="renewal-btn" class="btn">Update License Template PDFs</a>
 <hr>
 
 <div class="form-container">
@@ -46,8 +47,16 @@
 <div class="renewal-section-wrapper">
   <h2 class="renewal-section-title">License Renewals</h2>
 
-  <button class="btn" onclick="toggleOrder()">Reverse Display Order</button>
+  <div class="toggle-view">
+      {% if show_wants %}
+          <a class="btn secondary" href="?show_wants=0">Display - Email: False</a>
+      {% else %}
+          <a class="btn secondary" href="?show_wants=1">Display - Email: True</a>
+      {% endif %}
+  </div>
+
 </div>
+
 
 {% for b in businesses %}
 <div class="business-card">
@@ -72,15 +81,23 @@
         Download PDF
     </a>
 
-    <!-- Show PDF (preview) -->
-    <button 
-        class="btn preview-btn"
-        onclick="togglePreview(this)"
-        data-biz="{{ b.business_id }}"
-        data-preview-url="{% url 'preview_pdf' 'nursery' b.business_id %}"
-    >
-        Show PDF
-    </button>
+        <!-- Download Nursery PDF -->
+        <a
+          class="btn secondary"
+          href="{% url 'download_pdf' 'nursery' b.business_id %}"
+          >
+          Download PDF
+        </a>
+      
+        <!-- Unified PDF Preview -->
+        <button 
+            class="btn preview-btn"
+            onclick="togglePreview(this)"
+            data-biz="{{ b.business_id }}"
+            data-preview-url="{% url 'preview_pdf' 'nursery' b.business_id %}"
+        >
+            Show PDF
+        </button>
 
 
 </div>
@@ -115,18 +132,7 @@
 {% endblock %}
 
 {% block page_js %}
-  <script src="{% static 'js/generate-forms/pdf-preview.js' %}"></script>
-
-<script>
-function toggleOrder() {
-    const url = new URL(window.location.href);
-    const current = url.searchParams.get("reverse") === "1";
-    url.searchParams.set("reverse", current ? "0" : "1");
-    window.location.href = url.toString();
-}
-</script>
-
-
+  <script src="{% static 'main/js/generate-forms/pdf-preview.js' %}"></script>
 {% endblock %}
 
 

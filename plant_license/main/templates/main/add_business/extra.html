@@ -1,0 +1,120 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %} Add Business {% endblock %}
+
+{% block page_css %}
+    {{ form.media.css }}
+    {{ location_formset.media.css }}
+{% endblock %}
+
+
+{% block content %}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.full.min.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha26-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    {{ form.media.js }}
+    {{ location_formset.media.js }}
+
+
+<form method="post">
+    {% csrf_token %}
+   
+    {{ form.non_field_errors }}
+
+    <h2>Business Information</h2>
+    <p>
+        {{ form.business_name.label_tag }}
+        {{ form.business_name }}
+        {{ form.business_name.errors }}
+    </p>
+    <p>
+        {{ form.main_contact_name.label_tag }}
+        {{ form.main_contact_name }}
+        {{ form.main_contact_name.errors }}
+    </p>
+    <p>
+        {{ form.main_contact_email.label_tag }}
+        {{ form.main_contact_email }}
+        {{ form.main_contact_email.errors }}
+    </p>
+    <p>
+        {{ form.main_contact_phone.label_tag }}
+        {{ form.main_contact_phone }}
+        {{ form.main_contact_phone.errors }}
+    </p>
+
+    <hr>
+    
+    <h2>Suppliers</h2>
+    <p>
+        {{ form.suppliers }} 
+        {{ form.suppliers.errors }}
+    </p>
+    
+    <hr>
+    
+    <h2>Locations</h2>
+    
+    {{ location_formset.management_form }}
+    {{ location_formset.non_field_errors }}
+
+    <div id="location-forms-container">
+        {% for loc_form in location_formset %}
+            <div class="location-form">
+                {{ loc_form.as_p }}
+
+                <hr>
+            </div>
+        {% endfor %}
+    </div>
+
+    <button type="button" id="add-location-btn">Add Another Location</button>
+    <button type="button" id="remove-location-btn">Remove Last Location</button>
+    <button type="submit">Save Business</button>
+</form>
+
+<div id="empty-location-form" style="display: none;">
+    <div class="location-form">
+        {{ location_formset.empty_form.as_p }}
+        <hr>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+    <script>
+    document.getElementById('add-location-btn').addEventListener('click', function() {
+        let formContainer = document.getElementById('location-forms-container');
+        let totalFormsInput = document.getElementById('id_locations_set-TOTAL_FORMS');
+        let currentFormCount = parseInt(totalFormsInput.value);
+
+        let template = document.getElementById('empty-location-form').innerHTML;
+        let newFormHTML = template.replace(/__prefix__/g, currentFormCount);
+        
+        let newFormNode = document.createElement('div');
+        newFormNode.innerHTML = newFormHTML;
+        formContainer.appendChild(newFormNode.firstElementChild);
+        
+        totalFormsInput.value = currentFormCount + 1;
+    });
+
+    document.getElementById('remove-location-btn').addEventListener('click', function() {
+        let formContainer = document.getElementById('location-forms-container');
+        let totalFormsInput = document.getElementById('id_locations_set-TOTAL_FORMS');
+        let currentFormCount = parseInt(totalFormsInput.value);
+
+        // Only remove if there is more than one form
+        if (currentFormCount > 1) {
+            // Find the last form in the container and remove it
+            formContainer.removeChild(formContainer.lastElementChild);
+
+            // Decrement the total form count
+            totalFormsInput.value = currentFormCount - 1;
+        }
+    });
+    </script>
+{% endblock %}

@@ -4,7 +4,7 @@
 {% block title %} Update {% endblock %} 
 
 {% block page_css %}
-    <link rel="stylesheet" href="{% static 'css/update.css' %}" />
+    <link rel="stylesheet" href="{% static 'main/css/update.css' %}" />
 {% endblock %}
 
 {% block content %}
@@ -17,6 +17,9 @@
 
         <div class="form-controls">
             <button type="button" class="btn" id="edit-button">Edit</button>
+            {% if parent_object %}
+            <a href="{% url 'update' ct=parent_ct pk=parent_object.pk %}"><button type="button" class="btn">Return to Parent</button></a>
+            {% endif %}
             <button type="submit" class="btn" id="save-button">Save Changes</button>
             <button type="button" class="btn" id="cancel-button">Cancel</button>
         </div>
@@ -39,6 +42,10 @@
     {% for section_name, info in related_sections.items %}
         <div class="child-section datatable-container">
             <h3>{{ section_name }}</h3>
+            
+            {% if info.add_url %}
+            <a href="{% url info.add_url parent_id=master_object.pk %}"><button type=button class="btn">+ADD</button></a>
+            {% endif %}
 
             {% if info.items %}
                 <table class="child-table datatable">
@@ -81,8 +88,8 @@
 
 {% block page_js %}
 
-<script src="{% static 'js/update/form_edit.js' %}"></script>
-<script src="{% static 'js/update/delete_popup.js' %}"></script>
+<script src="{% static 'main/js/update/form_edit.js' %}"></script>
+<script src="{% static 'main/js/update/delete_popup.js' %}"></script>
 
 {% endblock %}
 

@@ -4,12 +4,11 @@
 {% block title %} View {% endblock %}
 
 {% block page_css %}
-    <link rel="stylesheet" href="{% static 'css/view.css' %}" />
+    <link rel="stylesheet" href="{% static 'main/css/view.css' %}" />
 {% endblock %}
 
 {% block content %}
 
-<h1> View </h1>
 
 <ul class="view_list"> 
   <li>
@@ -18,7 +17,7 @@
 
    {% for model_name, model_object in independent_models.items %}
       <li>
-         <a href="{% url 'specific_view' %}" class="btn">{{model_name}}</a>
+         <a href="{% url 'independent_view' ct=model_object %}" class="btn">{{model_name}}</a>
       </li>
    {% endfor %}
 </ul>

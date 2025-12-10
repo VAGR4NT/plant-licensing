@@ -4,13 +4,14 @@
 {% block title %} Dealer License Renewal {% endblock %}
 
 {% block page_css %}
-  <link rel="stylesheet" href="{% static 'css/nursery_generate.css' %}">
+  <link rel="stylesheet" href="{% static 'main/css/nursery_generate.css' %}">
 {% endblock %}
 
 {% block content %}
 
 <h1>Dealer License Renewal</h1>
-<a href="{% url 'nursery_generate' %}" id="nursery-btn" class="btn">Generate Nursery Licenses</a>
+<a href="{% url 'generate_forms' %}" id="nursery-btn" class="btn">Generate Nursery Licenses</a>
+<a href="{% url 'pdf_update' %}" id="renewal-btn" class="btn">Update License Template PDFs</a>
 <hr>
 
 <div class="form-container">
@@ -46,7 +47,13 @@
 <div class="renewal-section-wrapper">
   <h2 class="renewal-section-title">License Renewals</h2>
 
-  <button class="btn" onclick="toggleOrder()">Reverse Display Order</button>
+  <div class="toggle-view">
+      {% if show_wants %}
+          <a class="btn secondary" href="?show_wants=0">Display - Email: False</a>
+      {% else %}
+          <a class="btn secondary" href="?show_wants=1">Display - Email: True</a>
+      {% endif %}
+  </div>
 </div>
 
 {% for b in businesses %}
@@ -66,14 +73,13 @@
         </a>
 
         <!-- Download Dealer PDF -->
-        <a 
-            class="btn secondary"
-            href="{% url 'download_pdf' 'dealer' b.business_id %}"
-        >
-            Download PDF
+        <a
+          class="btn secondary"
+          href="{% url 'download_pdf' 'dealer' b.business_id %}"
+          >
+          Download PDF
         </a>
-
-        <!-- Show Dealer PDF Preview -->
+        <!-- Unified Dealer PDF Preview -->
         <button 
             class="btn preview-btn"
             onclick="togglePreview(this)"
@@ -115,15 +121,5 @@
 {% endblock %}
 
 {% block page_js %}
-<script src="{% static 'js/generate-forms/pdf-preview.js' %}"></script>
-
-<script>
-function toggleOrder() {
-    const url = new URL(window.location.href);
-    const current = url.searchParams.get("reverse") === "1";
-    url.searchParams.set("reverse", current ? "0" : "1");
-    window.location.href = url.toString();
-}
-</script>
-
+  <script src="{% static 'main/js/generate-forms/pdf-preview.js' %}"></script>
 {% endblock %}

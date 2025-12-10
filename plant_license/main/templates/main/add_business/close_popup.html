@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Closing...</title>
+</head>
+<body>
+    <script type="text/javascript">
+        // 1. Get the ID and String Representation of the new object
+        var newId = "{{ object.pk }}";
+        var newRepr = "{{ object|escapejs }}";
+
+        // 2. Call the function on the PARENT window (the form you came from)
+        // Note: Ensure the parent window has the 'closePopup' function defined!
+        if (window.opener && typeof window.opener.closePopup === 'function') {
+            window.opener.closePopup(window, newId, newRepr);
+        } else {
+            // Fallback if something goes wrong (just close self)
+            window.close();
+        }
+    </script>
+</body>
+</html>

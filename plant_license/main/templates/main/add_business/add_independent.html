@@ -1,0 +1,28 @@
+{% load crispy_forms_tags %}
+{% load static %}
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'main/css/add_business.css' %}" />
+
+<div class="form-container">
+    
+    <div class="form-body">
+        <h2 style="margin-top: 0;">Details</h2>
+        
+        <form method="post" action="{{ request.get_full_path }}">
+            {% csrf_token %}
+		
+	
+	    {% if 'popup' in request.GET %}
+                <input hidden=true name="is_popup" value="1">
+            {% endif %}
+            {% crispy form %}
+
+            <button type="submit" class="btn-submit" style="margin-top: 20px;">Save & Continue</button>
+        </form>
+    </div>
+</div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.full.min.js"></script>
+    {{ form.media.js }}
