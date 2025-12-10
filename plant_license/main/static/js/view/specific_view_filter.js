@@ -6,7 +6,15 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("table-fields-data").textContent,
   );
 
-  const operators = ["exact", "iexact", "icontains", "gt", "gte", "lt", "lte"];
+  const operatorMap = {
+  exact: "Equals",
+  iexact: "Equals (case-insensitive)",
+  icontains: "Contains",
+  gt: "Greater than (>)",
+  gte: "Greater than or equal (>=)",
+  lt: "Less than (<)",
+  lte: "Less than or equal (<=)"
+};
 
   const addFilterBtn = document.getElementById("add-filter-btn");
   const filterContainer = document.getElementById("filter-list-container");
@@ -17,18 +25,12 @@ document.addEventListener("DOMContentLoaded", function () {
     () => createFilterRow({}, false), // empty row
   );
 
-  /**
-   * Create a filter row
-   * @param {object} preset - { group, field, op, val }
-   * @param {boolean} fromLoad - whether this is being created on page load
-   */
   function createFilterRow(preset = {}, fromLoad = false) {
     filterRowCount++;
 
     const row = document.createElement("div");
     row.className = "filter-row";
 
-    // --- group select ---
     const groupSelect = document.createElement("select");
     groupSelect.name = `adv_group_${filterRowCount}`;
     groupSelect.innerHTML =
@@ -37,19 +39,20 @@ document.addEventListener("DOMContentLoaded", function () {
         .map((group) => `<option value="${group}">${group}</option>`)
         .join("");
 
-    // --- field select ---
     const fieldSelect = document.createElement("select");
     fieldSelect.name = `adv_field_${filterRowCount}`;
     fieldSelect.innerHTML = `<option value="">-- Select Field --</option>`;
 
-    // --- operator select ---
     const opSelect = document.createElement("select");
     opSelect.name = `adv_op_${filterRowCount}`;
+    
     opSelect.innerHTML =
-      `<option value="">-- Operator --</option>` +
-      operators.map((op) => `<option value="${op}">${op}</option>`).join("");
+  `<option value="">-- Operator --</option>` +
+  Object.entries(operatorMap)
+    .map(([val, label]) => `<option value="${val}">${label}</option>`)
+    .join("");
 
-    // --- value input ---
+	  // --- value input ---
     const valueInput = document.createElement("input");
     valueInput.type = "text";
     valueInput.name = `adv_val_${filterRowCount}`;
@@ -81,9 +84,6 @@ document.addEventListener("DOMContentLoaded", function () {
     row.append(groupSelect, fieldSelect, opSelect, valueInput, removeBtn);
     filterContainer.appendChild(row);
 
-    // -----------------------------
-    // If row is being restored from query params, fill values
-    // -----------------------------
     if (fromLoad) {
       if (preset.group) {
         groupSelect.value = preset.group;
@@ -94,9 +94,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // --------------------------------------------------------
-  // RESTORE FILTERS FROM QUERY STRING
-  // --------------------------------------------------------
   const params = new URLSearchParams(window.location.search);
   const existingFilters = [];
 
@@ -115,9 +112,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (preset) createFilterRow(preset, true);
   });
 
-  // --------------------------------------------------------
-  // Preserve scroll-to-results behavior
-  // --------------------------------------------------------
   form.addEventListener("submit", function () {
     sessionStorage.setItem("scrollToResults", "true");
   });
