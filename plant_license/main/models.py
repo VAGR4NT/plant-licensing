@@ -1,12 +1,13 @@
 from django.db import models
 from django.utils import timezone
 
+
 class BusinessTypes(models.Model):
     type_id = models.AutoField(primary_key=True)
     type_name = models.CharField(max_length=100, unique=True)
 
     class Meta:
-        db_table = 'business_types'
+        db_table = "business_types"
         verbose_name = "Business Type"
 
     def __str__(self):
@@ -14,11 +15,12 @@ class BusinessTypes(models.Model):
 
     @staticmethod
     def identifying_fields():
-        return ['type_name']
+        return ["type_name"]
+
 
 class EmailTemplate(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    subject = models.CharField(max_length=300) 
+    subject = models.CharField(max_length=300)
     body = models.TextField()
 
     def __str__(self):
@@ -26,14 +28,39 @@ class EmailTemplate(models.Model):
 
     @staticmethod
     def identifying_fields():
-        return ['name']
+        return ["name"]
+
+
+# for updating the license renewal pdf files
+class RenewalTemplate(models.Model):
+    KIND_CHOICES = [
+        ("nursery", "Nursery"),
+        ("dealer", "Dealer"),
+    ]
+
+    kind = models.CharField(max_length=32, choices=KIND_CHOICES)
+    pdf = models.FileField(upload_to="plant_license/pdfs/")
+    original_filename = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Stores the original filename for downloads",
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-uploaded_at"]
+
+    def __str__(self):
+        return f"{self.kind} - {self.uploaded_at:%Y-%m-%d %H:%M}"
+
 
 class PlantTypes(models.Model):
     plant_type_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
 
     class Meta:
-        db_table = 'plant_types'
+        db_table = "plant_types"
         verbose_name = "Plant Type"
 
     def __str__(self):
@@ -41,7 +68,7 @@ class PlantTypes(models.Model):
 
     @staticmethod
     def identifying_fields():
-        return ['name']
+        return ["name"]
 
 
 class SellingSeasons(models.Model):
@@ -49,7 +76,7 @@ class SellingSeasons(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
     class Meta:
-        db_table = 'selling_seasons'
+        db_table = "selling_seasons"
         verbose_name = "Selling Season"
 
     def __str__(self):
@@ -57,14 +84,15 @@ class SellingSeasons(models.Model):
 
     @staticmethod
     def identifying_fields():
-        return ['name']
+        return ["name"]
+
 
 class ShippingRegions(models.Model):
     region_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
 
     class Meta:
-        db_table = 'shipping_regions'
+        db_table = "shipping_regions"
         verbose_name = "Shipping Region"
 
     def __str__(self):
@@ -72,7 +100,8 @@ class ShippingRegions(models.Model):
 
     @staticmethod
     def identifying_fields():
-        return ['name']
+        return ["name"]
+
 
 class Suppliers(models.Model):
     supplier_id = models.AutoField(primary_key=True)
@@ -83,8 +112,8 @@ class Suppliers(models.Model):
     zip_code = models.CharField(max_length=10, blank=True, null=True)
 
     class Meta:
-        db_table = 'suppliers'
-        ordering = ['supplier_name']
+        db_table = "suppliers"
+        ordering = ["supplier_name"]
         verbose_name_plural = "Suppliers"
 
     @staticmethod
@@ -96,7 +125,7 @@ class Suppliers(models.Model):
 
     @staticmethod
     def identifying_fields():
-        return ['supplier_name', 'address', 'city', 'state']
+        return ["supplier_name", "address", "city", "state"]
 
 
 class Pests(models.Model):
@@ -104,21 +133,22 @@ class Pests(models.Model):
     common_name = models.CharField(max_length=255, unique=True)
     scientific_name = models.CharField(max_length=255, blank=True, null=True)
     pest_type = models.CharField(
-        max_length=50, 
+        max_length=50,
         choices=[
-            ('Insect', 'Insect'),
-            ('Disease', 'Disease'),
-            ('Fungus', 'Fungus'),
-            ('Mite', 'Mite'),
-            ('Weed', 'Weed'),
-            ('Other', 'Other')
+            ("Insect", "Insect"),
+            ("Disease", "Disease"),
+            ("Fungus", "Fungus"),
+            ("Mite", "Mite"),
+            ("Weed", "Weed"),
+            ("Other", "Other"),
         ],
-        blank=True, null=True
+        blank=True,
+        null=True,
     )
 
     class Meta:
-        db_table = 'pests'
-        ordering = ['common_name']
+        db_table = "pests"
+        ordering = ["common_name"]
         verbose_name_plural = "Pests"
 
     def __str__(self):
@@ -126,23 +156,23 @@ class Pests(models.Model):
 
     @staticmethod
     def identifying_fields():
-        return ['common_name']
+        return ["common_name"]
+
 
 class Businesses(models.Model):
     business_id = models.AutoField(primary_key=True)
-    
+
     entity_type = models.CharField(
-        max_length=20, 
-        choices=[('Dealer', 'Dealer'), ('Nursery', 'Nursery')]
+        max_length=20, choices=[("Dealer", "Dealer"), ("Nursery", "Nursery")]
     )
     business_name = models.CharField(max_length=255, unique=True)
     dba_business_name = models.CharField(max_length=255, blank=True, null=True)
-    
+
     mo_address = models.CharField(max_length=255, blank=True, null=True)
     mo_city = models.CharField(max_length=100, blank=True, null=True)
     mo_state = models.CharField(max_length=2, blank=True, null=True)
     mo_zip = models.CharField(max_length=10, blank=True, null=True)
-    
+
     main_contact_name = models.CharField(max_length=255, blank=True, null=True)
     main_contact_phone = models.CharField(max_length=30, blank=True, null=True)
     main_contact_email = models.EmailField(max_length=255, blank=True, null=True)
@@ -150,16 +180,24 @@ class Businesses(models.Model):
     main_contact_fax = models.CharField(max_length=30, blank=True, null=True)
     main_contact_alt_email = models.EmailField(max_length=255, blank=True, null=True)
 
-    class_code = models.CharField(max_length=1, choices=[('A', 'A'), ('B', 'B')], db_column='class', blank=True, null=True)
-    acreage = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    class_code = models.CharField(
+        max_length=1,
+        choices=[("A", "A"), ("B", "B")],
+        db_column="class",
+        blank=True,
+        null=True,
+    )
+    acreage = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True
+    )
     priority_rank = models.CharField(max_length=50, blank=True, null=True)
-    
+
     is_interstate_shipper = models.BooleanField(default=False)
     wants_email_renewal = models.BooleanField(default=False)
     wants_email_license = models.BooleanField(default=False)
     wants_labels = models.BooleanField(default=False)
     num_labels = models.IntegerField(blank=True, null=True)
-    
+
     is_deleted = models.BooleanField(default=False)
     date_deleted = models.DateField(blank=True, null=True)
     deletion_reason = models.TextField(blank=True, null=True)
@@ -167,14 +205,24 @@ class Businesses(models.Model):
 
     formerly_known_as = models.CharField(max_length=255, blank=True, null=True)
 
-    suppliers = models.ManyToManyField(Suppliers, db_table='business_suppliers', blank=True)
-    business_types = models.ManyToManyField(BusinessTypes, db_table='business_type_map', blank=True)
-    plant_types = models.ManyToManyField(PlantTypes, db_table='business_plant_types', blank=True)
-    selling_seasons = models.ManyToManyField(SellingSeasons, db_table='business_selling_seasons', blank=True)
-    shipping_regions = models.ManyToManyField(ShippingRegions, db_table='business_shipping_regions', blank=True)
+    suppliers = models.ManyToManyField(
+        Suppliers, db_table="business_suppliers", blank=True
+    )
+    business_types = models.ManyToManyField(
+        BusinessTypes, db_table="business_type_map", blank=True
+    )
+    plant_types = models.ManyToManyField(
+        PlantTypes, db_table="business_plant_types", blank=True
+    )
+    selling_seasons = models.ManyToManyField(
+        SellingSeasons, db_table="business_selling_seasons", blank=True
+    )
+    shipping_regions = models.ManyToManyField(
+        ShippingRegions, db_table="business_shipping_regions", blank=True
+    )
 
     class Meta:
-        db_table = 'businesses'
+        db_table = "businesses"
         verbose_name_plural = "Businesses"
 
     def __str__(self):
@@ -182,16 +230,17 @@ class Businesses(models.Model):
 
     @staticmethod
     def identifying_fields():
-        return ['business_name']
-
+        return ["business_name"]
 
 
 class Locations(models.Model):
     location_id = models.AutoField(primary_key=True)
-    business = models.ForeignKey(Businesses, on_delete=models.CASCADE, related_name='locations')
-    
+    business = models.ForeignKey(
+        Businesses, on_delete=models.CASCADE, related_name="locations"
+    )
+
     legacy_license_id = models.CharField(max_length=100, blank=True, null=True)
-    
+
     store_number = models.CharField(max_length=64, blank=True, null=True)
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=100)
@@ -200,25 +249,25 @@ class Locations(models.Model):
     mo_code = models.CharField(max_length=64)
     zip_code = models.CharField(max_length=10)
     county = models.CharField(max_length=100, blank=True, null=True)
-    
+
     gps_coordinates = models.TextField(blank=True, null=True)
     field_location_notes = models.TextField(blank=True, null=True)
     barriers_to_inspection = models.TextField(blank=True, null=True)
-    
+
     site_contact_name = models.CharField(max_length=255, blank=True, null=True)
     site_contact_phone = models.CharField(max_length=30, blank=True, null=True)
     site_contact_email = models.EmailField(max_length=255, blank=True, null=True)
 
     class Meta:
-        db_table = 'locations'
+        db_table = "locations"
         verbose_name_plural = "Locations"
-    
+
     def get_parent(self):
         return self.business
 
     @staticmethod
     def identifying_fields():
-        return ['address', 'city', 'state', 'business__business_name']
+        return ["address", "city", "state", "business__business_name"]
 
     @staticmethod
     def get_add_url():
@@ -231,23 +280,25 @@ class Locations(models.Model):
 class Licenses(models.Model):
     license_id = models.AutoField(primary_key=True)
     location = models.ForeignKey(Locations, on_delete=models.CASCADE)
-    
+
     license_period_start = models.DateField()
     license_period_end = models.DateField()
-    amount_due = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    amount_due = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True
+    )
     payment_method = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
-        db_table = 'licenses'
+        db_table = "licenses"
         verbose_name_plural = "Licenses"
-        unique_together = ('location', 'license_period_start')
+        unique_together = ("location", "license_period_start")
 
     def __str__(self):
         return f"Lic {self.license_period_end.year} - {self.location}"
 
     @staticmethod
     def identifying_fields():
-        return ['location__address', 'licesnse_period_start', 'license_period_end']
+        return ["location__address", "licesnse_period_start", "license_period_end"]
 
 
 class ComplianceAgreements(models.Model):
@@ -257,7 +308,7 @@ class ComplianceAgreements(models.Model):
     articles_covered = models.TextField(blank=True, null=True)
 
     class Meta:
-        db_table = 'compliance_agreements'
+        db_table = "compliance_agreements"
         verbose_name_plural = "Compliance Agreements"
 
     def get_parent(self):
@@ -272,23 +323,23 @@ class ComplianceAgreements(models.Model):
 
     @staticmethod
     def identifying_fields():
-        return ['business__business_name', 'agreement_number']
+        return ["business__business_name", "agreement_number"]
 
 
 class Inspections(models.Model):
     inspection_id = models.AutoField(primary_key=True)
     location = models.ForeignKey(Locations, on_delete=models.CASCADE)
-    
+
     inspected_by = models.CharField(max_length=255, blank=True, null=True)
     inspection_date = models.DateField(default=timezone.now)
     additional_inspection_date = models.DateField(blank=True, null=True)
-    
+
     passes_inspection = models.BooleanField(default=True)
     verbal_report = models.BooleanField(default=False)
-    
+
     infestation_summary = models.TextField(blank=True, null=True)
     remarks = models.TextField(blank=True, null=True)
-    
+
     samples_taken_pram = models.BooleanField(default=False)
     sample_number = models.CharField(max_length=256, blank=True, null=True)
     trace_back = models.TextField(blank=True, null=True)
@@ -296,7 +347,7 @@ class Inspections(models.Model):
     scn_samples = models.BooleanField(default=False)
 
     class Meta:
-        db_table = 'inspections'
+        db_table = "inspections"
         verbose_name_plural = "Inspections"
 
     def __str__(self):
@@ -304,19 +355,21 @@ class Inspections(models.Model):
 
     @staticmethod
     def identifying_fields():
-        return ['location__address', 'inspection_date']
+        return ["location__address", "inspection_date"]
 
 
 class InspectionFindings(models.Model):
     finding_id = models.AutoField(primary_key=True)
-    inspection = models.ForeignKey(Inspections, on_delete=models.CASCADE, related_name='findings')
+    inspection = models.ForeignKey(
+        Inspections, on_delete=models.CASCADE, related_name="findings"
+    )
     pest = models.ForeignKey(Pests, on_delete=models.PROTECT)
-    
+
     plant_name = models.CharField(max_length=255, blank=True, null=True)
     location_description = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
-        db_table = 'inspection_findings'
+        db_table = "inspection_findings"
         verbose_name_plural = "Inspection Findings"
 
     def __str__(self):
@@ -324,5 +377,4 @@ class InspectionFindings(models.Model):
 
     @staticmethod
     def identifying_fields():
-        return ['plant_name']
-
+        return ["plant_name"]

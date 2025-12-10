@@ -87,11 +87,16 @@ h1 {
 }
 
 #dealer-btn,
+#renewal-btn,
 #nursery-btn {
   display: block;
   margin: 1rem auto; /* centers block elements */
   width: fit-content; /* keeps it button-sized */
   background-color: var(--color-wildcat-black);
+}
+
+#renewal-btn {
+  background-color: rgb(210, 4, 45);
 }
 
 button.btn {

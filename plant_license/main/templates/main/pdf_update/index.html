@@ -1,0 +1,117 @@
+{% extends "main/base.html" %}
+{% load static %}
+{% block title %} Update License PDFs {% endblock %}
+
+{% block page_css %}
+  <link rel="stylesheet" href="{% static 'css/pdf_update.css' %}" />
+{% endblock %}
+
+
+{% block content %}
+<h1>License Renewal Template Management</h1>
+
+<!-- ================= UPLOAD BUTTONS ================= -->
+<div class="pdf-upload-container">
+  <!-- Nursery Upload Form -->
+  <div>
+    <h2>Upload Nursery PDF</h2>
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="kind" value="nursery">
+      {{ nursery_form.pdf }}
+      <button type="submit">Upload</button>
+    </form>
+  </div>
+
+  <!-- Dealer Upload Form -->
+  <div>
+    <h2>Upload Dealer PDF</h2>
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="kind" value="dealer">
+      {{ dealer_form.pdf }}
+      <button type="submit">Upload</button>
+    </form>
+  </div>
+</div>
+
+<hr>
+
+<!-- ================= NURSERY TABLE ================= -->
+<div class="datatable-container">
+  <h2>Nursery Template History</h2>
+  <table class="datatable">
+    <thead>
+      <tr>
+        <th>Upload Date</th>
+        <th>Filename</th>
+        <th>Status</th>
+        <th>Download</th>
+        <th>Set Active</th>
+        <th>Remove</th> <!-- new -->
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in nursery_templates %}
+      <tr {% if t.is_active %}style="background-color:#d4f4dd"{% endif %}>
+        <td>{{ t.uploaded_at }}</td>
+        <td>{{ t.original_filename }}</td>
+        <td>{% if t.is_active %}✅ Active{% else %}Inactive{% endif %}</td>
+        <td><a href="{% url 'download_template' t.id %}" class="btn">Download</a></td>
+        <td>{% if not t.is_active %}<a class="btn active" href="{% url 'activate_template' t.id %}">Make Active</a>{% else %}—{% endif %}</td>
+        <td>
+          {% if not t.is_active %}
+          <a class="btn remove" href="{% url 'remove_template' t.id %}" 
+            onclick="return confirm('Are you sure you want to delete this template?');">
+            Remove
+          </a>
+          {% else %}
+          —
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<hr>
+
+<!-- ================= DEALER TABLE ================= -->
+<div class="datatable-container">
+  <h2>Dealer Template History</h2>
+  <table class="datatable">
+    <thead>
+      <tr>
+        <th>Uploaded At</th>
+        <th>Filename</th>
+        <th>Status</th>
+        <th>Download</th>
+        <th>Set Active</th>
+        <th>Remove</th> <!-- new -->
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in dealer_templates %}
+      <tr {% if t.is_active %}style="background-color:#d4f4dd"{% endif %}>
+        <td>{{ t.uploaded_at }}</td>
+        <td>{{ t.original_filename }}</td>
+        <td>{% if t.is_active %}✅ Active{% else %}Inactive{% endif %}</td>
+        <td><a href="{% url 'download_template' t.id %}" class="btn">Download</a></td>
+        <td>{% if not t.is_active %}<a href="{% url 'activate_template' t.id %}">Make Active</a>{% else %}—{% endif %}</td>
+        <td>
+          {% if not t.is_active %}
+          <a href="{% url 'remove_template' t.id %}" 
+            onclick="return confirm('Are you sure you want to delete this template?');">
+            Remove
+          </a>
+          {% else %}
+          —
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

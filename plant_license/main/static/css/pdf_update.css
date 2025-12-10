@@ -1,0 +1,81 @@
+h1 {
+  text-align: center;
+}
+
+.btn.active {
+  background-color: green;
+}
+
+.btn.remove {
+  background-color: rgb(210, 4, 45);
+}
+
+.datatable-container {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* Container for both forms */
+.pdf-upload-container {
+  display: flex;
+  justify-content: center; /* center horizontally */
+  gap: 40px; /* space between the two forms */
+  margin: 40px 0; /* space above/below container */
+  flex-wrap: wrap; /* wrap on smaller screens */
+}
+
+/* Individual form container */
+.pdf-upload-container > div {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 30px 20px;
+  text-align: center;
+  width: 300px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Form headings */
+.pdf-upload-container h2 {
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* File input styling */
+.pdf-upload-container input[type="file"] {
+  display: block;
+  margin: 0 auto 15px auto; /* center and add spacing below */
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Upload button styling */
+.pdf-upload-container button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.pdf-upload-container button:hover {
+  background-color: #45a049;
+}
+
+/* Optional: responsive adjustment */
+@media (max-width: 700px) {
+  .pdf-upload-container {
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+}

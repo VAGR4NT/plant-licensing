@@ -11,6 +11,9 @@ from .query_builder import (
     format_table,
     _validate_and_get_field,
 )
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.http import FileResponse, HttpResponse
 import json
 from django.apps import apps
 from django.db.models import ForeignKey, OneToOneField, ManyToManyField
@@ -22,6 +25,9 @@ from io import BytesIO
 from pathlib import Path
 from django.conf import settings
 from django.utils import timezone
+
+from .models import RenewalTemplate
+from .forms import TemplateUploadForm
 
 import csv
 from openpyxl import Workbook
@@ -36,9 +42,12 @@ from .forms import DealerForm, NurseryForm, LocationForm, ComplianceForm, Suppli
 from django.db import transaction
 from .models import Businesses, Locations, Licenses, Suppliers
 
+from django.core.files import File
+
 import base64
 import uuid
 from email.utils import formatdate
+
 
 def home_view(request):
     return render(request, "main/index.html", context)
@@ -60,7 +69,7 @@ def specific_view(request):
         path_prefix = info["prefix"]
 
         for field in model_class._meta.fields:
-            if  not isinstance(field, (ForeignKey, OneToOneField)):
+            if not isinstance(field, (ForeignKey, OneToOneField)):
                 clean_label = field.name.replace("_", " ").title()
                 fields_for_group.append(
                     {"name": f"{path_prefix}{field.name}", "label": clean_label}
@@ -82,11 +91,13 @@ def specific_view(request):
     try:
         filters = []
         if request.GET.get("q"):
-            filters.append({
+            filters.append(
+                {
                     "field": "business_name",
                     "operator": "icontains",
                     "value": request.GET.get("q"),
-                    })
+                }
+            )
 
         for i in range(1, 6):
             field = request.GET.get(f"adv_field_{i}")
@@ -97,9 +108,7 @@ def specific_view(request):
 
         select_columns = request.GET.getlist("columns")
         if not select_columns:
-            select_columns = (
-                ["business_name", "mo_city"]
-        )
+            select_columns = ["business_name", "mo_city"]
 
         queryset = query_builder(Businesses, filters=filters)
         context["result_count"] = queryset.count()
@@ -108,12 +117,12 @@ def specific_view(request):
         context.update(display_data)
 
     except ValueError as e:
-          context["error_message"] = f"Error building query: {e}"
+        context["error_message"] = f"Error building query: {e}"
 
     return render(request, "main/view/specific_view.html", context)
 
-def independent_view(request, ct):
 
+def independent_view(request, ct):
     model_class = ContentType.objects.get(id=ct).model_class()
 
     context = {
@@ -121,26 +130,29 @@ def independent_view(request, ct):
         "rows": [],
         "model_id": ct,
         "model_name": model_class._meta.verbose_name.title(),
-        'add_url': model_class.get_add_url() if hasattr(model_class, 'get_add_url') else None,
+        "add_url": model_class.get_add_url()
+        if hasattr(model_class, "get_add_url")
+        else None,
         "error_message": None,
     }
 
     try:
         filters = []
-        
+
         queryset = query_builder(model_class, filters=filters)
-        
+
         print(queryset)
         print(model_class.identifying_fields())
-        
+
         display_data = format_table(queryset, model_class.identifying_fields())
         context.update(display_data)
         print(context)
 
     except ValueError as e:
-          context["error_message"] = f"Error building query: {e}"
+        context["error_message"] = f"Error building query: {e}"
 
     return render(request, "main/view/independent_view.html", context)
+
 
 def direct_access_view(request):
     return render(request, "main/direct-access/index.html")
@@ -160,7 +172,7 @@ def view_db_view(request):
         "AuthGroup",
         "Businesses",
         "EmailTemplate",
-        "SellingSeasons"
+        "SellingSeasons",
     ]
 
     try:
@@ -179,7 +191,9 @@ def view_db_view(request):
                     break
 
             if is_independent:
-                context["independent_models"][model._meta.verbose_name.title()] = ContentType.objects.get_for_model(model).id
+                context["independent_models"][model._meta.verbose_name.title()] = (
+                    ContentType.objects.get_for_model(model).id
+                )
 
     except LookupError:
         context["error"] = "Problem"
@@ -190,76 +204,106 @@ def view_db_view(request):
 def generate_forms_view(request):
     return render(request, "main/generate-forms/index.html")
 
+
 class add_business(CreateView):
     model = Businesses
-    template_name = 'main/add_business/index.html'
+    template_name = "main/add_business/index.html"
 
     def get_form_class(self):
-        form_type = self.request.GET.get('type', 'Dealer')
+        form_type = self.request.GET.get("type", "Dealer")
 
-        if form_type == 'Nursery':
+        if form_type == "Nursery":
             return NurseryForm
         return DealerForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['current_type'] = self.request.GET.get('type', 'Dealer')
+        context["current_type"] = self.request.GET.get("type", "Dealer")
         return context
 
     def get_success_url(self):
-         return reverse('update', kwargs={'ct': ContentType.objects.get_for_model(self.object._meta.model).id ,'pk':self.object.pk})
-    
+        return reverse(
+            "update",
+            kwargs={
+                "ct": ContentType.objects.get_for_model(self.object._meta.model).id,
+                "pk": self.object.pk,
+            },
+        )
+
+
 class add_compliance_agreement(CreateView):
     model = ComplianceAgreements
-    template_name = 'main/add_business/add_location.html'
+    template_name = "main/add_business/add_location.html"
 
     def get_form_class(self):
         return ComplianceForm
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['parent_id'] = self.kwargs.get('parent_id')
+        kwargs["parent_id"] = self.kwargs.get("parent_id")
         return kwargs
 
     def get_success_url(self):
-        return reverse('update', kwargs={'ct': ContentType.objects.get_for_model(self.object._meta.model).id ,'pk':self.object.pk})
+        return reverse(
+            "update",
+            kwargs={
+                "ct": ContentType.objects.get_for_model(self.object._meta.model).id,
+                "pk": self.object.pk,
+            },
+        )
+
 
 class add_supplier(CreateView):
     model = Suppliers
-    template_name = 'main/add_business/add_independent.html'
+    template_name = "main/add_business/add_independent.html"
 
     def get_form_class(self):
         return SupplierForm
 
     def get_success_url(self):
-        return reverse('update', kwargs={'ct': ContentType.objects.get_for_model(self.object._meta.model).id ,'pk':self.object.pk})
+        return reverse(
+            "update",
+            kwargs={
+                "ct": ContentType.objects.get_for_model(self.object._meta.model).id,
+                "pk": self.object.pk,
+            },
+        )
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        
-        if 'popup' in self.request.GET:
-            return render(self.request, 'main/add_business/close_popup.html', {
-                'object': self.object
-            })
-            
+
+        if "popup" in self.request.GET:
+            return render(
+                self.request,
+                "main/add_business/close_popup.html",
+                {"object": self.object},
+            )
+
         return response
-    
+
 
 class add_location(CreateView):
     model = Locations
-    template_name = 'main/add_business/add_location.html'
+    template_name = "main/add_business/add_location.html"
 
     def get_form_class(self):
         return LocationForm
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['parent_id'] = self.kwargs.get('parent_id')
+        kwargs["parent_id"] = self.kwargs.get("parent_id")
         return kwargs
 
     def get_success_url(self):
-        return reverse('update', kwargs={'ct': ContentType.objects.get_for_model(self.object._meta.model).id ,'pk':self.object.pk})
+        return reverse(
+            "update",
+            kwargs={
+                "ct": ContentType.objects.get_for_model(self.object._meta.model).id,
+                "pk": self.object.pk,
+            },
+        )
+
 
 def update_view(request, ct, pk):
     """
@@ -268,11 +312,13 @@ def update_view(request, ct, pk):
     """
     model_class = ContentType.objects.get(id=ct).model_class()
     master_object = get_object_or_404(model_class, pk=pk)
-    local_field_names = [field.name for field in model_class._meta.fields if not field.is_relation]
-    DynamicModelForm = modelform_factory(model_class, fields=local_field_names) 
+    local_field_names = [
+        field.name for field in model_class._meta.fields if not field.is_relation
+    ]
+    DynamicModelForm = modelform_factory(model_class, fields=local_field_names)
 
-    if request.method == 'POST':
-        if 'delete' in request.POST:
+    if request.method == "POST":
+        if "delete" in request.POST:
             master_object.delete()
             return redirect(request.META.get("HTTP_REFERER", "/"))
 
@@ -298,9 +344,11 @@ def update_view(request, ct, pk):
             queryset = getattr(master_object, accessor_name).all()
             related_model = field.related_model
             related_sections[related_model._meta.verbose_name.title()] = {
-                'items': queryset,
-                'model': ContentType.objects.get_for_model(related_model).id,
-                'add_url': related_model.get_add_url() if hasattr(related_model, 'get_add_url') else None 
+                "items": queryset,
+                "model": ContentType.objects.get_for_model(related_model).id,
+                "add_url": related_model.get_add_url()
+                if hasattr(related_model, "get_add_url")
+                else None,
             }
 
     context = {
@@ -310,18 +358,19 @@ def update_view(request, ct, pk):
         "master_model_name": model_class._meta.model_name,
     }
 
-    if hasattr(master_object, 'get_parent'):
+    if hasattr(master_object, "get_parent"):
         context["parent_object"] = master_object.get_parent()
-        context["parent_ct"] = ContentType.objects.get_for_model(master_object.get_parent()).id
-    else: 
+        context["parent_ct"] = ContentType.objects.get_for_model(
+            master_object.get_parent()
+        ).id
+    else:
         context["parent_object"] = None
-        context["parent_ct"] = None 
+        context["parent_ct"] = None
 
-    if hasattr(master_object, 'get_add_url'):
+    if hasattr(master_object, "get_add_url"):
         context["add_url"] = master_object.get_add_url()
     else:
         context["add_url"] = None
-
 
     return render(request, "main/update/index.html", context)
 
@@ -332,16 +381,6 @@ def user_info_view(request):
 
 def account_view(request):
     return render(request, "main/account/index.html")
-
-
-# ============================================================
-# PDF TEMPLATE PATHS
-# ============================================================
-
-NURSERY_TEMPLATE_PATH = (
-    Path(settings.BASE_DIR) / "pdfs" / "nursery_renewal_fillable.pdf"
-)
-DEALER_TEMPLATE_PATH = Path(settings.BASE_DIR) / "pdfs" / "dealer_renewal_fillable.pdf"
 
 
 # ============================================================
@@ -468,6 +507,7 @@ def _nursery_fieldmap(biz: Businesses):
         "Check": "",
     }
 
+
 def download_nursery_pdf(request, business_id: int):
     # Get the business row by business_id (this is your “key”)
     try:
@@ -560,6 +600,7 @@ def download_nursery_pdf(request, business_id: int):
     )
     return resp
 
+
 # ============================================================
 # DEALER FIELDMAP
 # ============================================================
@@ -621,7 +662,6 @@ Content-Transfer-Encoding: base64
 
 LICENSE_TYPES = {
     "nursery": {
-        "template_path": NURSERY_TEMPLATE_PATH,
         "template_defaults": {
             "subject": "Nursery Renewal PDF for {business_name}",
             "body": 'Attached is the file "{filename}".',
@@ -629,7 +669,6 @@ LICENSE_TYPES = {
         "fieldmap": _nursery_fieldmap,
     },
     "dealer": {
-        "template_path": DEALER_TEMPLATE_PATH,
         "template_defaults": {
             "subject": "Dealer Renewal PDF for {business_name}",
             "body": 'Attached is the file "{filename}".',
@@ -661,8 +700,12 @@ def _load_email_template(kind: str):
 
 def generate_pdf(kind: str, biz: Businesses):
     cfg = _get_license_config(kind)
+
     field_map = cfg["fieldmap"](biz)
-    pdf_bytes = _fill_pdf(str(cfg["template_path"]), field_map)
+
+    template_path = _get_template_path(kind)
+    pdf_bytes = _fill_pdf(template_path, field_map)
+
     filename = f"{kind} renewal - {biz.business_name}.pdf"
     return pdf_bytes, filename
 
@@ -687,17 +730,38 @@ def download_pdf(request, kind: str, business_id: int):
 
 
 def download_eml(request, kind: str, business_id: int):
+    """
+    Generate an EML email containing the PDF as an attachment.
+    Supports full {field_name} placeholders anywhere in the template,
+    including all business fields and first location fields.
+    """
     biz = get_object_or_404(Businesses, pk=business_id)
-
     tmpl, _ = _load_email_template(kind)
+
+    # Generate PDF
     pdf_bytes, filename = generate_pdf(kind, biz)
 
-    subject = tmpl.subject.format(business_name=biz.business_name)
-    body = tmpl.body.format(
-        business_name=biz.business_name,
-        filename=filename,
-    )
+    # Start with PDF field map
+    field_map = LICENSE_TYPES[kind]["fieldmap"](biz)
+    field_map["filename"] = filename
 
+    # Merge all fields from the Businesses model
+    for field in Businesses._meta.get_fields():
+        if hasattr(biz, field.name):
+            field_map[field.name] = getattr(biz, field.name)
+
+    # Merge all fields from the first location
+    first_loc = Locations.objects.filter(business=biz).order_by("location_id").first()
+    if first_loc:
+        for field in Locations._meta.get_fields():
+            if hasattr(first_loc, field.name):
+                field_map[field.name] = getattr(first_loc, field.name)
+
+    # Interpolate placeholders in subject and body
+    subject = tmpl.subject.format(**field_map)
+    body = tmpl.body.format(**field_map)
+
+    # Build raw EML
     eml_body = _build_eml(
         to_addr=biz.main_contact_email or "",
         subject=subject,
@@ -725,9 +789,11 @@ def generate_page(request, kind: str, template_name: str):
         tmpl.save()
         messages.success(request, "Email template updated.")
 
-    businesses = Businesses.objects.order_by(
-        F("wants_email_renewal").desc(nulls_last=True),
-        "business_name",
+    # Toggle filter based on query parameter
+    show_wants = request.GET.get("show_wants", "1") == "1"  # default True
+
+    businesses = Businesses.objects.filter(wants_email_renewal=show_wants).order_by(
+        "business_name"
     )
 
     return render(
@@ -736,6 +802,7 @@ def generate_page(request, kind: str, template_name: str):
         {
             "businesses": businesses,
             "template": tmpl,
+            "show_wants": show_wants,
         },
     )
 
@@ -748,13 +815,140 @@ def dealer_generate(request):
     return generate_page(request, "dealer", "main/dealer_generate/index.html")
 
 
-def export_table_as_csv(request):
+DEFAULT_PDFS = {
+    "nursery": "plant_license/pdfs/nursery_renewal_fillable.pdf",
+    "dealer": "plant_license/pdfs/dealer_renewal_fillable.pdf",
+}
 
+
+def pdf_update(request):
+    if request.method == "POST":
+        kind = request.POST.get("kind")
+        form = TemplateUploadForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            uploaded_file = request.FILES["pdf"]  # assuming field is named pdf
+            with transaction.atomic():
+                # deactivate old active
+                RenewalTemplate.objects.filter(kind=kind, is_active=True).update(
+                    is_active=False
+                )
+
+                # save new template
+                new_template = form.save(commit=False)
+                new_template.kind = kind
+                new_template.is_active = True
+                new_template.original_filename = uploaded_file.name
+                new_template.save()
+
+            messages.success(request, f"{kind.title()} PDF updated successfully.")
+            return redirect("pdf_update")
+
+    return render(
+        request,
+        "main/pdf_update/index.html",
+        {
+            "nursery_form": TemplateUploadForm(),
+            "dealer_form": TemplateUploadForm(),
+            "nursery_templates": RenewalTemplate.objects.filter(kind="nursery"),
+            "dealer_templates": RenewalTemplate.objects.filter(kind="dealer"),
+        },
+    )
+
+
+@transaction.atomic
+def remove_template(request, template_id: int):
+    template = get_object_or_404(RenewalTemplate, id=template_id)
+
+    if template.is_active:
+        messages.error(
+            request, "Cannot remove the active template. Activate another first."
+        )
+        return redirect("pdf_update")
+
+    template.delete()
+    messages.success(request, f"{template.kind.title()} template removed successfully.")
+    return redirect("pdf_update")
+
+
+def _get_template_path(kind: str) -> str:
+    """
+    Returns the filesystem path to the active template for the given kind.
+    If no active template exists, uses the default PDF from DEFAULT_PDFS.
+    Automatically creates a RenewalTemplate record for the default PDF if needed.
+    """
+    # First, try to get the active template from the database
+    template = RenewalTemplate.objects.filter(kind=kind, is_active=True).first()
+    if template:
+        # Fill original_filename if missing (for older rows)
+        if not template.original_filename:
+            template.original_filename = template.pdf.name.split("/")[-1]
+            template.save()
+        return template.pdf.path
+
+    # No active template — check default
+    if kind not in DEFAULT_PDFS:
+        raise Http404(f"No default PDF configured for {kind}")
+
+    default_rel_path = DEFAULT_PDFS[kind]
+    default_abs_path = Path(settings.BASE_DIR).parent / default_rel_path
+
+    if not default_abs_path.exists():
+        raise Http404(f"Default PDF missing for {kind}: {default_abs_path}")
+
+    # Read the default PDF bytes
+    pdf_bytes = default_abs_path.read_bytes()
+    filename = default_abs_path.name  # e.g., "nursery_renewal_fillable.pdf"
+
+    # Save to Django storage (RELATIVE path)
+    stored_path = default_storage.save(
+        f"plant_license/pdfs/{filename}",
+        ContentFile(pdf_bytes),
+    )
+
+    # Create a new RenewalTemplate record for the default PDF
+    template = RenewalTemplate.objects.create(
+        kind=kind,
+        pdf=stored_path,
+        original_filename=filename,  # ✅ ensures table shows filename
+        is_active=True,
+    )
+
+    return template.pdf.path
+
+
+def download_template_version(request, template_id: int):
+    template = get_object_or_404(RenewalTemplate, pk=template_id)
+
+    return FileResponse(
+        template.pdf.open("rb"),
+        as_attachment=True,
+        filename=template.original_filename,
+    )
+
+
+@transaction.atomic
+def activate_template_version(request, template_id: int):
+    template = get_object_or_404(RenewalTemplate, id=template_id)
+
+    # deactivate all others of same kind
+    RenewalTemplate.objects.filter(kind=template.kind).update(is_active=False)
+
+    # activate selected
+    template.is_active = True
+    template.save()
+
+    messages.success(request, f"{template.kind.title()} template is now active.")
+
+    return redirect("pdf_update")
+
+
+def export_table_as_csv(request):
     # Create the HttpResponse object with the appropriate CSV header.
     # This tells the browser to treat the response as a file to be downloaded.
     response = HttpResponse(
-        content_type='text/csv',
-        headers={'Content-Disposition': 'attachment; filename="data.csv"'},
+        content_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="data.csv"'},
     )
 
     # Get all data from your model
@@ -790,20 +984,20 @@ def export_table_as_xlsx(request):
     # 1. Create a new Workbook and get the active worksheet
     workbook = Workbook()
     worksheet = workbook.active
-    worksheet.title = "Business Data" 
+    worksheet.title = "Business Data"
 
-    PROTECTION_PASSWORD = 'LockHeader'
+    PROTECTION_PASSWORD = "LockHeader"
 
     # 2. Configure the HTTP Response for XLSX
     response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        headers={'Content-Disposition': 'attachment; filename="data_protected.xlsx"'},
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="data_protected.xlsx"'},
     )
 
     # 3. Get all data and field names
     queryset = Businesses.objects.all()
     if not queryset.exists():
-        pass # Handle empty queryset as before
+        pass  # Handle empty queryset as before
 
     field_names = [field.name for field in Businesses._meta.fields]
     num_columns = len(field_names)
@@ -812,9 +1006,9 @@ def export_table_as_xlsx(request):
     worksheet.append(field_names)
 
     # 5. Write data rows AND UNLOCK the data cells
-    
+
     # We start iterating from row 2 (index 1) for data
-    row_num = 2 
+    row_num = 2
     for obj in queryset:
         row_data = [getattr(obj, field) for field in field_names]
         worksheet.append(row_data)
@@ -822,28 +1016,23 @@ def export_table_as_xlsx(request):
         # Unlock all cells in the current data row (row_num)
         for col_index in range(1, num_columns + 1):
             col_letter = get_column_letter(col_index)
-            cell = worksheet[f'{col_letter}{row_num}']
-            
+            cell = worksheet[f"{col_letter}{row_num}"]
+
             # Key Step 1: Set the protection to 'unlocked'
             cell.protection = Protection(locked=False)
-            
-        
+
         row_num += 1
 
-
-    worksheet.protection.sheet = True 
+    worksheet.protection.sheet = True
     worksheet.protection.password = PROTECTION_PASSWORD
-    
+
     # You can configure what the user is allowed to do while the sheet is protected
-    worksheet.protection.sort = True        
-    worksheet.protection.autofilter = True  
-    worksheet.protection.insertRows = True  
+    worksheet.protection.sort = True
+    worksheet.protection.autofilter = True
+    worksheet.protection.insertRows = True
     worksheet.protection.insertColumns = True
 
     # 7. Save the workbook to the HttpResponse file-like object
     workbook.save(response)
 
     return response
-
-
-

@@ -11,6 +11,7 @@
 
 <h1>Nursery License Renewal</h1>
 <a href="{% url 'dealer_generate' %}" id="dealer-btn" class="btn">Generate Dealer Licenses</a>
+<a href="{% url 'pdf_update' %}" id="renewal-btn" class="btn">Update License Template PDFs</a>
 <hr>
 
 <div class="form-container">
@@ -45,7 +46,17 @@
 
 <div class="renewal-section-wrapper">
   <h2 class="renewal-section-title">License Renewals</h2>
+
+  <div class="toggle-view">
+      {% if show_wants %}
+          <a class="btn secondary" href="?show_wants=0">Display - Email: False</a>
+      {% else %}
+          <a class="btn secondary" href="?show_wants=1">Display - Email: True</a>
+      {% endif %}
+  </div>
+
 </div>
+
 
 {% for b in businesses %}
 <div class="business-card">
