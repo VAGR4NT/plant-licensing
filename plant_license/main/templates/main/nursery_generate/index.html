@@ -38,7 +38,7 @@
 
       <div class="form-controls">
           <button type="submit" class="btn primary" id="save-button">
-            Save Template Changes
+            Save Email Changes
           </button>
       </div>
   </form>
@@ -66,20 +66,13 @@
         <span style="font-weight: normal;">{{ b.wants_email_renewal }}</span>
     </div>
 
-<div class="actions">
+    <div class="actions">
 
-    <!-- Download Email -->
-    <a class="btn secondary"
-       href="{% url 'download_eml' 'nursery' b.business_id %}">
-        Download Email (.eml)
-    </a>
-    <!-- Download PDF -->
-    <a 
-        class="btn secondary"
-        href="{% url 'download_pdf' 'nursery' b.business_id %}"
-    >
-        Download PDF
-    </a>
+        <!-- Unified Email Download -->
+        <a class="btn secondary"
+           href="{% url 'download_eml' 'nursery' b.business_id %}">
+            Download Email (.eml)
+        </a>
 
         <!-- Download Nursery PDF -->
         <a
@@ -99,8 +92,7 @@
             Show PDF
         </button>
 
-
-</div>
+    </div>
 
     <div id="preview-{{ b.business_id }}" class="preview-container">
 
@@ -134,5 +126,3 @@
 {% block page_js %}
   <script src="{% static 'main/js/generate-forms/pdf-preview.js' %}"></script>
 {% endblock %}
-
-

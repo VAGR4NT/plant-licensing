@@ -602,99 +602,6 @@ def download_nursery_pdf(request, business_id: int):
     return resp
 
 
-def download_nursery_pdf(request, business_id: int):
-    # Get the business row by business_id (this is your “key”)
-    try:
-        biz = Businesses.objects.get(pk=business_id)
-    except Businesses.DoesNotExist:
-        raise Http404("Business not found")
-
-    # Choose a representative location (adjust selection rule if needed)
-    location = Locations.objects.filter(business=biz).order_by("location_id").first()
-
-    # Fees: $40 + $1.50 per acre
-    acreage = float(biz.acreage or 0)
-    amount_due_val = 40.00 + 1.50 * acreage
-    amount_due_str = f"${amount_due_val:,.2f}"
-
-    # Field locations: split notes across up to 4 lines (or synthesize)
-    location_lines = []
-    if location and (location.field_location_notes or "").strip():
-        for line in (location.field_location_notes or "").splitlines():
-            line = line.strip()
-            if line:
-                location_lines.append(line)
-            if len(location_lines) == 4:
-                break
-    else:
-        qs = (
-            Locations.objects.filter(business=biz)
-            .order_by("location_id")
-            .values("city", "county", "zip_code")
-        )[:4]
-        for rec in qs:
-            parts = [
-                p
-                for p in [rec.get("city"), rec.get("county"), rec.get("zip_code")]
-                if p
-            ]
-            if parts:
-                location_lines.append(", ".join(parts))
-    while len(location_lines) < 4:
-        location_lines.append("")
-
-    # Checkbox (email vs USPS) — set as you wish or leave "Off"
-    prefers_email = True
-    checkbox_val = "Yes" if prefers_email else "Off"
-
-    # Today’s date for the certification line
-    today_str = timezone.localdate().strftime("%m/%d/%Y")
-
-    # Map DB → THIS form’s fields
-    field_map = {
-        # Header: put business_id into “License Number”
-        "License Number": str(business_id),
-        "current_license_year1": "",
-        # Mailing Information
-        "business_name": biz.business_name or "",
-        "mailing_address": biz.mo_address or "",
-        "main_office_city1": biz.mo_city or "",
-        "main_office_state": biz.mo_state or "",
-        "main_office_zip1": biz.mo_zip or "",
-        "main_office_county": (location.county if location and location.county else ""),
-        # Contact
-        "main_contact_name": biz.main_contact_name or "",
-        "main_office_city2": biz.mo_city or "",
-        "main_office_zip2": biz.mo_zip or "",
-        "phone_number": biz.main_contact_phone or "",
-        "fax": "",
-        "main_contact_email": biz.main_contact_email or "",
-        # Field locations (4 lines on this form)
-        "field_location1": location_lines[0],
-        "field_location2": location_lines[1],
-        "field_location3": location_lines[2],
-        "field_location4": location_lines[3],
-        # Fees
-        "acreage": f"{acreage:g}",
-        "amount_due": amount_due_str,
-        "Amt": amount_due_str,  # mirror into bottom box if desired
-        # Checkbox + date
-        "Check Box17": checkbox_val,
-        "Date": today_str,
-        # Bottom admin box
-        "Lic Year": "",
-        "Date Recd": "",
-        "Check": "",
-    }
-
-    filled = _fill_pdf(str(TEMPLATE_PATH), field_map)
-    resp = HttpResponse(filled, content_type="application/pdf")
-    resp["Content-Disposition"] = (
-        f'attachment; filename="nursery_renewal_{business_id}.pdf"'
-    )
-    return resp
-
-
 # ============================================================
 # DEALER FIELDMAP
 # ============================================================
@@ -757,15 +664,15 @@ Content-Transfer-Encoding: base64
 LICENSE_TYPES = {
     "nursery": {
         "template_defaults": {
-            "subject": "Plant License Renewal for {business_name}",
-            "body": 'Attached is the renewal form: "{filename}".',
+            "subject": "Nursery Renewal PDF for {business_name}",
+            "body": 'Attached is the file "{filename}".',
         },
         "fieldmap": _nursery_fieldmap,
     },
     "dealer": {
         "template_defaults": {
-            "subject": "Plant License Renewal for {business_name}",
-            "body": 'Attached is the renewal form: "{filename}".',
+            "subject": "Dealer Renewal PDF for {business_name}",
+            "body": 'Attached is the file "{filename}".',
         },
         "fieldmap": _dealer_fieldmap,
     },
@@ -877,33 +784,19 @@ def download_eml(request, kind: str, business_id: int):
 def generate_page(request, kind: str, template_name: str):
     tmpl, _ = _load_email_template(kind)
 
-    # --- Handle email template save ---
     if request.method == "POST":
         tmpl.subject = request.POST.get("subject", "")
         tmpl.body = request.POST.get("body", "")
         tmpl.save()
         messages.success(request, "Email template updated.")
 
-    # Toggle filter based on query parameters
+    # Toggle filter based on query parameter
     show_wants = request.GET.get("show_wants", "1") == "1"  # default True
-    reverse_order = request.GET.get("reverse_order", "0") == "1"  # default False
 
-    businesses = Businesses.objects.filter(wants_email_renewal=show_wants)
+    businesses = Businesses.objects.filter(wants_email_renewal=show_wants).order_by(
+        "business_name"
+    )
 
-    if reverse_order:
-        # reversed: False first, then True
-        businesses = businesses.order_by(
-            F("wants_email_renewal").asc(nulls_last=True),
-            "business_name",
-        )
-    else:
-        # normal: True first, then False
-        businesses = businesses.order_by(
-            F("wants_email_renewal").desc(nulls_last=True),
-            "business_name",
-        )
-
-    # --- Render page ---
     return render(
         request,
         template_name,
@@ -911,7 +804,6 @@ def generate_page(request, kind: str, template_name: str):
             "businesses": businesses,
             "template": tmpl,
             "show_wants": show_wants,
-            "reverse_order": reverse_order,
         },
     )
 
