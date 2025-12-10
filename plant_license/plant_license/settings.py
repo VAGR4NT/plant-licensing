@@ -19,15 +19,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# this should be loaded from an enviornment variable in production
-SECRET_KEY = "django-insecure-f72b9i&a)163kfd#o!o#(*8tq7-ky2c3((q3yv!qfbi2u!$tku"
+# this should be replaced with a secure key in production
+SECRET_KEY = "django-insecure-f72b9i&a)163kfd#o!o#(*8tq7-ky2c3((q3yv!qfbi2u!$tku"  # ideally loaded using enviornmnet variable
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]  # this should be set to domain name in production
 
-X_FRAME_OPTIONS = "origin"
+X_FRAME_OPTIONS = "origin"  # overwritten to DENY when debug=False
 
 
 # Application definition
@@ -52,7 +52,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "main.middleware.LoginRequiredMiddleware",  # comment out, to access webpage without login
+    "main.middleware.LoginRequiredMiddleware",  # FOR DEVELOPMENT ONLY: comment out to access webpage without login
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -83,6 +83,7 @@ WSGI_APPLICATION = "plant_license.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
+        # this information must be changed to reflect database information
         "NAME": "plantss",
         "USER": "admin",
         "PASSWORD": "admin",
@@ -116,7 +117,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "America/New_York"
 
 USE_I18N = True
 
@@ -127,9 +128,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [
-    BASE_DIR / "main" / "static",
-]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"

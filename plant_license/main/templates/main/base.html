@@ -7,9 +7,9 @@
 
     <title>{% block title %}{% endblock %}</title>
 
-    <link rel="icon" type="image/vnd.microsoft.icon" href="{% static 'images/favicon.ico' %}" />
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
-    <link rel="stylesheet" href="{% static 'css/global-components.css' %}" />
+    <link rel="icon" type="image/vnd.microsoft.icon" href="{% static 'main/images/favicon.ico' %}" />
+    <link rel="stylesheet" href="{% static 'main/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/global-components.css' %}" />
     {% block page_css %}{% endblock %}
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -75,7 +75,7 @@
     </main>
 
     <!-- hamburger menu for mobile navigation -->
-    <script src="{% static 'js/base_hamburger.js' %}"></script>
+    <script src="{% static 'main/js/base_hamburger.js' %}"></script>
     {% block page_js %}{% endblock %}
 
   </body>
