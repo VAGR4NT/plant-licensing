@@ -26,7 +26,6 @@ urlpatterns = [
         name="login",
     ),
     path("logout/", auth_views.LogoutView.as_view(next_page="login"), name="logout"),
-    path("admin/", admin.site.urls),
     # Protected routes
     path("direct-access/", views.direct_access_view, name="direct_access"),
     path("view/", views.view_db_view, name="view_db"),

@@ -172,6 +172,7 @@ def view_db_view(request):
         "AuthGroup",
         "Businesses",
         "EmailTemplate",
+        "RenewalTemplate",
         "SellingSeasons",
     ]
 
@@ -872,45 +873,36 @@ def remove_template(request, template_id: int):
 
 
 def _get_template_path(kind: str) -> str:
-    """
-    Returns the filesystem path to the active template for the given kind.
-    If no active template exists, uses the default PDF from DEFAULT_PDFS.
-    Automatically creates a RenewalTemplate record for the default PDF if needed.
-    """
-    # First, try to get the active template from the database
     template = RenewalTemplate.objects.filter(kind=kind, is_active=True).first()
     if template:
-        # Fill original_filename if missing (for older rows)
         if not template.original_filename:
             template.original_filename = template.pdf.name.split("/")[-1]
             template.save()
         return template.pdf.path
 
-    # No active template — check default
     if kind not in DEFAULT_PDFS:
         raise Http404(f"No default PDF configured for {kind}")
 
     default_rel_path = DEFAULT_PDFS[kind]
-    default_abs_path = Path(settings.BASE_DIR).parent / default_rel_path
 
-    if not default_abs_path.exists():
-        raise Http404(f"Default PDF missing for {kind}: {default_abs_path}")
+    default_abs_path = finders.find(default_rel_path)
+    if not default_abs_path:
+        raise Http404(f"Default PDF missing for {kind}: {default_rel_path}")
 
-    # Read the default PDF bytes
+    default_abs_path = Path(default_abs_path)
+
     pdf_bytes = default_abs_path.read_bytes()
-    filename = default_abs_path.name  # e.g., "nursery_renewal_fillable.pdf"
+    filename = default_abs_path.name
 
-    # Save to Django storage (RELATIVE path)
     stored_path = default_storage.save(
-        f"plant_license/pdfs/{filename}",
+        f"pdfs/{filename}",
         ContentFile(pdf_bytes),
     )
 
-    # Create a new RenewalTemplate record for the default PDF
     template = RenewalTemplate.objects.create(
         kind=kind,
         pdf=stored_path,
-        original_filename=filename,  # ✅ ensures table shows filename
+        original_filename=filename,
         is_active=True,
     )
 

@@ -39,7 +39,7 @@ class RenewalTemplate(models.Model):
     ]
 
     kind = models.CharField(max_length=32, choices=KIND_CHOICES)
-    pdf = models.FileField(upload_to="plant_license/pdfs/")
+    pdf = models.FileField(upload_to="pdfs/")
     original_filename = models.CharField(
         max_length=255,
         blank=True,
