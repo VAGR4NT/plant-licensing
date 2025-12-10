@@ -508,6 +508,7 @@ def _nursery_fieldmap(biz: Businesses):
         "Check": "",
     }
 
+
 def download_nursery_pdf(request, business_id: int):
     # Get the business row by business_id (this is your “key”)
     try:
@@ -883,22 +884,21 @@ def generate_page(request, kind: str, template_name: str):
         tmpl.save()
         messages.success(request, "Email template updated.")
 
-    # Toggle filter based on query parameter
+    # Toggle filter based on query parameters
     show_wants = request.GET.get("show_wants", "1") == "1"  # default True
+    reverse_order = request.GET.get("reverse_order", "0") == "1"  # default False
 
-    businesses = Businesses.objects.filter(wants_email_renewal=show_wants).order_by(
-        "business_name"
-    )
+    businesses = Businesses.objects.filter(wants_email_renewal=show_wants)
 
     if reverse_order:
         # reversed: False first, then True
-        businesses = Businesses.objects.order_by(
+        businesses = businesses.order_by(
             F("wants_email_renewal").asc(nulls_last=True),
             "business_name",
         )
     else:
         # normal: True first, then False
-        businesses = Businesses.objects.order_by(
+        businesses = businesses.order_by(
             F("wants_email_renewal").desc(nulls_last=True),
             "business_name",
         )
@@ -911,6 +911,7 @@ def generate_page(request, kind: str, template_name: str):
             "businesses": businesses,
             "template": tmpl,
             "show_wants": show_wants,
+            "reverse_order": reverse_order,
         },
     )
 
