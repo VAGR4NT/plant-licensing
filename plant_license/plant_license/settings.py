@@ -84,9 +84,9 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         # this information must be changed to reflect database information
-        "NAME": "plantss",
-        "USER": "admin",
-        "PASSWORD": "admin",
+        "NAME": "plantdb",
+        "USER": "postgres",
+        "PASSWORD": "1010",
         "HOST": "localhost",
         "PORT": "5432",
     }
